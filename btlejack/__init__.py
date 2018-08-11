@@ -273,7 +273,7 @@ def main():
 
     elif args.connreq is not None:
         # Support magic word "any" and "*" as wildcards
-        if args.connreq.lower() in ['any', '*']:
+        if args.connreq.lower() == 'any':
             args.connreq = 'ff:ff:ff:ff:ff:ff'
         bd_addr_int = bd_address_to_int(args.connreq)
         if bd_addr_int is not None:
