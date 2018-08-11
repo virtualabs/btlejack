@@ -230,3 +230,9 @@ $ btlejack -f 0xac56bc12 -x nordic -o capture.nordic.pcap
 ```
 
 The `ll_phdr` export type is useful when sniffing an encrypted connection, as it is also supported by [crackle](https://github.com/mikeryan/crackle). So if you want to sniff and break encrypted connections, this is the way to go.
+
+You may also need to tell crackle to use a specific cracking strategy, by using the `-s` option:
+
+```
+$ crackle -i some.pcap -s 1
+```
