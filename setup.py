@@ -15,6 +15,8 @@ setup(
     author = "Damien Cauquil",
     author_email = "damien.cauquil@digital.security",
     description = ("Bluetooth Low Energy Swiss-army knife to sniff, jam and hijack connections"),
+    long_description = read('README.md'),
+    long_description_content_type = 'text/markdown',
     license = "MIT",
     keywords = "bluetooth smart low energy hijack sniff jam",
     packages=find_packages(),
@@ -28,5 +30,5 @@ setup(
             'btlejack=btlejack:main',
         ]
     },
-    package_data = {'btlejack' : ['data/btlejack-fw.hex']}
+    package_data = {'btlejack' : ['data/btlejack-fw.hex', 'LICENSE']}
 )
