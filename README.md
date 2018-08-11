@@ -1,7 +1,7 @@
 BtleJack: a new Bluetooth Low Energy swiss-army knife
 =====================================================
 
-Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Energy devices. It relies on one or more BBC Micro:Bit devices running a dedicated firmware.
+Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Energy devices. It relies on one or more [BBC Micro:Bit](http://microbit.org/) devices running a dedicated firmware.
 
 **This tool only supports Bluetooth Low Energy 4.x.**
 
@@ -10,16 +10,20 @@ How to install
 
 First, install the `btlejack` Python3 client software with Pip:
 
-```$ sudo pip3 install btlejack```
+```
+$ sudo pip3 install btlejack
+```
 
-Then, connect your Micro:Bit device to your computer with a USB cable, and issue the following command:
+Then, connect your Micro:Bit device to your computer with a USB cable, mount the associated mass storage device, and issue the following command:
 
-```$ btlejack -i```
+```
+$ btlejack -i
+```
 
 This will program every Micro:Bit device connected to your computer, and make
-them ready to use with Btlejack.
+them ready to use with Btlejack. It will use the correct firmware version for the current client software, so it is highly recommended to perform this firmware installation procedure each time you update Btlejack.
 
-You're all set !
+Keep your microbits connected and you're all set !
 
 How to use Btlejack
 -------------------
@@ -33,7 +37,7 @@ Using Btlejack is quite easy. Btlejack can:
 
 ### Sniffing an existing connection
 
-First, find some existing connection to target with `btlejack`:
+First, find an existing connection to target with `btlejack`:
 
 ``` text
 $ btlejack -s
@@ -45,6 +49,10 @@ BtleJack version 1.1
 ```
 
 The first value (in dBm) shows the power of the signal, the greater this value is the better the sniffed connection will be.
+
+The second value (hex) is the associated *access address*, a 32-bit value identifying a link between two bluetooth low energy compatible devices.
+
+The last value is the number of packets seen with this *access address*. The higher this value is, the more probable the corresponding *access address* is used.
 
 Then, use the `-f` option to follow a specific connection:
 
@@ -68,12 +76,13 @@ LL Data: 0a 08 04 00 04 00 0b 5a 69 70
 
 ```
 
+**If you are using more than 1 microbit, Btlejack will parallelize some of the sniffing operations in order to speed up the connection parametres recovery !**
 
 ### Sniffing for new connections
 
 The `-c` option supported by `btlejack` allows you to specify the target BD address, or you may want to use `any` to capture any new connection created.
 
-``` text
+```
 $ btlejack -c any
 BtleJack version 1.1
 
@@ -94,6 +103,14 @@ LL Data: 03 09 08 0f 00 00 00 00 00 00 00
 LL Data: 0b 06 0c 08 0f 00 09 41
 LL Data: 03 06 0c 07 1d 00 d3 07
 ```
+
+or you may also want to specify the target BD address:
+
+```
+$ btlejack -c 03:e1:f0:00:11:22
+```
+
+**If you connect at least 3 microbits at the same time on your computer, Btlejack will be able to sniff on every advertising channels and has far more chance to capture the connection request.**
 
 ### Jamming a connection
 
