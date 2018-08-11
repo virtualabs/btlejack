@@ -187,7 +187,7 @@ def main():
                     print('[i] Flashing %s ...' % volume.decode('ascii'))
                     path = os.path.join(volume.decode('ascii'),'fw.hex')
                     fw = open(fw_path,'r').read()
-                    # copy our firmware on it
+                    # copy our firmware on it
                     with open(path, 'wb') as output:
                         output.write(fw.encode('ascii'))
                     flashed += 1
