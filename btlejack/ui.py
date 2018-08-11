@@ -469,8 +469,8 @@ class CLIConnectionRecovery(ConnectionRecovery):
         if crc is None:
             self.spinner = Halo(text='Computing CRCInit value', spinner='line')
         elif channel_map is not None:
-            print('✓ CRCInit: %006x' % crc)
-            print('✓ Channel map is provided: %010x' % self.chm)
+            print('✓ CRCInit: 0x%006x' % crc)
+            print('✓ Channel map is provided: 0x%010x' % self.chm)
             self.spinner = Halo(text='Computing hop interval', spinner='line')
         else:
             print('✓ CRCInit: 0x%006x' % crc)
@@ -501,7 +501,7 @@ class CLIConnectionRecovery(ConnectionRecovery):
             'text':'CRCInit = 0x%06x'%crc
         })
         if self.chm_provided:
-            print('✓ Channel map is provided: %010x' % self.chm)
+            print('✓ Channel map is provided: 0x%010x' % self.chm)
             self.spinner.text = 'Computing hop interval'
             self.spinner.start()
             self.interface.recover_hop(self.access_address, self.crc, self.chm)
