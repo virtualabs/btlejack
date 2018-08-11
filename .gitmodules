@@ -1,0 +1,3 @@
+[submodule "btlejack-firmware"]
+	path = btlejack-firmware
+	url = https://github.com/virtualabs/btlejack-firmware.git
