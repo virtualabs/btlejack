@@ -8,15 +8,17 @@ Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Ene
 How to install
 ==============
 
-First, install the `btlejack` Python3 client software with Pip:
+First, install the ``btlejack`` Python3 client software with Pip:
 
-.. code-block:: bash
+::
+
   $ sudo pip3 install btlejack
 
 
 Then, connect your Micro:Bit device to your computer with a USB cable, mount the associated mass storage device, and issue the following command:
 
-.. code-block:: bash
+::
+
   $ btlejack -i
 
 
@@ -29,6 +31,7 @@ How to use Btlejack
 ===================
 
 Using Btlejack is quite easy. Btlejack can:
+
 - sniff an existing BLE connection
 - sniff new BLE connections
 - jam an existing BLE connection
@@ -38,9 +41,10 @@ Using Btlejack is quite easy. Btlejack can:
 Sniffing an existing connection
 -------------------------------
 
-First, find an existing connection to target with `btlejack`:
+First, find an existing connection to target with ``btlejack``:
 
-.. code-block:: bash
+::
+
   $ btlejack -s
   BtleJack version 1.1
 
@@ -56,7 +60,8 @@ The last value is the number of packets seen with this *access address*. The hig
 
 Then, use the `-f` option to follow a specific connection:
 
-.. code-block:: bash
+::
+
   $ btlejack -f 0xdda4845e
   BtleJack version 1.1
 
@@ -82,7 +87,8 @@ Sniffing for new connections
 
 The  ``-c`` option supported by ``btlejack`` allows you to specify the target BD address, or you may want to use ``any`` to capture any new connection created.
 
-.. code-block:: bash
+::
+
   $ btlejack -c any
   BtleJack version 1.1
 
@@ -105,7 +111,8 @@ The  ``-c`` option supported by ``btlejack`` allows you to specify the target BD
 
 or you may also want to specify the target BD address:
 
-.. code-block:: bash
+::
+
   $ btlejack -c 03:e1:f0:00:11:22
 
 
@@ -116,8 +123,9 @@ Jamming a connection
 
 Once a connection identified by its *access address*, you can provide jam it by using the ``-j`` option:
 
-.. code-block:: bash
-  $ btlejack -f 0x129f3244 -j̀```
+::
+
+  $ btlejack -f 0x129f3244 -j̀
 
 
 Hijacking a BLE connection
@@ -127,7 +135,8 @@ Btlejack is also able to hijack an existing connection, use the ``-t`` option to
 
 First, hijack an existing connection:
 
-.. code-block:: bash
+::
+
   $ btlejack -f 0x9c68fd30 -t -m 0x1fffffffff
   BtleJack version 1.1
 
@@ -155,7 +164,8 @@ Then use the following commands to interact with the device:
 
 The ``discover`` command will send and receive Bluetooth LE packets and retrieve all the services UUIDs and parameters, as well as characteristics UUIDs and parameters:
 
-.. code-block:: bash
+::
+
   btlejack> discover
   start: 0001 end: 0005
   start: 0014 end: 001a
@@ -194,7 +204,8 @@ The ``discover`` command will send and receive Bluetooth LE packets and retrieve
 
 The ``read`` command accepts a single parameter, the value handle corresponding to the characteristic you want to read from:
 
-.. code-block:: bash
+::
+
   btlejack> read 0x16
   read>> 4c 47 20 77 65 62 4f 53 20 54 56
 
@@ -203,13 +214,15 @@ The ``read`` command accepts a single parameter, the value handle corresponding 
 
 The ``write`` command accepts three parameters:
 
-.. code-block:: bash
+::
+
   btlejack> write <value handle> <data format> <data>
 
 
 Supported data formats:
-- ``hex``: Hex data (i.e. "414261")
-- ``str``: Text string, may be encapsulated in double quotes
+
+- ``hex``: hex data (i.e. "414261")
+- ``str``: text string, may be encapsulated in double quotes
 
 *ll* command
 ^^^^^^^^^^^^
@@ -223,19 +236,22 @@ PCAP file export
 One interesting feature of Btlejack is the possibility to export the captured data to a PCAP file.
 
 Btlejack supports the following DLT formats:
-- DLT_BLUETOOTH_LE_LL_WITH_PHDR (same)
-- DLT_NORDIC_BLE (the one used by Nordic' sniffer)
-- DLT_BLUETOOTH_LE_LL (supported on latest versions of Wireshark)
+
+* DLT_BLUETOOTH_LE_LL_WITH_PHDR (same)
+* DLT_NORDIC_BLE (the one used by Nordic' sniffer)
+* DLT_BLUETOOTH_LE_LL (supported on latest versions of Wireshark)
 
 The output file may be specified using the `-o` option, while the output format may be specified with the `-x` option. Valid formats values are: `ll_phdr`, `nordic`, or `pcap` (default).
 
-.. code-block:: bash
+::
+
   $ btlejack -f 0xac56bc12 -x nordic -o capture.nordic.pcap
 
 
-The ``ll_phdr`` export type is useful when sniffing an encrypted connection, as it is also supported by [crackle](https://github.com/mikeryan/crackle). So if you want to sniff and break encrypted connections, this is the way to go.
+The ``ll_phdr`` export type is useful when sniffing an encrypted connection, as it is also supported by `crackle <https://github.com/mikeryan/crackle>`_. So if you want to sniff and break encrypted connections, this is the way to go.
 
 You may also need to tell crackle to use a specific cracking strategy, by using the `-s` option:
 
-.. code-block:: bash
+::
+
   $ crackle -i some.pcap -s 1
