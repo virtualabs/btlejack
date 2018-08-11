@@ -230,15 +230,6 @@ class ConnectionRecovery(Supervisor):
 
                     # If channel map is provided
                     if self.chm_provided:
-                        """
-                        # If hop interval is provided
-                        if self.hop_provided:
-                            # Recover hop increment
-                            self.state = self.STATE_RECOVER_HOPINC
-                        else:
-                            # Recover hop interval
-                            self.state = self.STATE_RECOVER_HOPINTER
-                        """
                         #self.on_chm(self.chm)
                         self.state = self.STATE_RECOVER_HOPINTER
                     else:
