@@ -69,7 +69,7 @@ class BtlejackSession:
         """
         Remove a given connection from the session.
         """
-        if access_addres in self.connections:
+        if access_address in self.connections:
             del self.connections[access_address]
 
     def clear(self):
