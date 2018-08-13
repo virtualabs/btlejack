@@ -6,12 +6,13 @@ from serial import Serial
 from serial.tools.list_ports import comports
 from struct import pack, unpack
 from threading import Lock
-from btlejack.packets import Packet, PacketRegistry, ResetCommand, VersionCommand, \
-    ScanConnectionsCommand, RecoverConnectionCommand, ResetResponse, \
-    VersionResponse, ScanConnectionsResponse, AccessAddressNotification, \
-    RecoverConnectionResponse, SniffConnReqCommand, SniffConnReqResponse, \
-    ConnectionRequestNotification, EnableJammingCommand, EnableJammingResponse, \
-    EnableHijackingCommand, EnableHijackingResponse
+from btlejack.packets import (Packet, PacketRegistry, ResetCommand, VersionCommand,
+    ScanConnectionsCommand, RecoverConnectionCommand, ResetResponse,
+    VersionResponse, ScanConnectionsResponse, AccessAddressNotification,
+    RecoverConnectionResponse, SniffConnReqCommand, SniffConnReqResponse,
+    ConnectionRequestNotification, EnableJammingCommand, EnableJammingResponse,
+    EnableHijackingCommand, EnableHijackingResponse, RecoverCrcInitCommand,
+    RecoverResponse)
 
 
 class DeviceError(Exception):
