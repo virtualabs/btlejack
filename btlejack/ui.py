@@ -496,10 +496,10 @@ class CLIConnectionRecovery(ConnectionRecovery):
         Connection CRC has been recovered.
         """
         self.crc = crc
-        self.spinner.stop_and_persist({
-            'symbol':'✓'.encode('utf-8'),
-            'text':'CRCInit = 0x%06x'%crc
-        })
+        self.spinner.stop_and_persist(
+            symbol='✓'.encode('utf-8'),
+            text='CRCInit = 0x%06x'%crc
+        )
         if self.chm_provided:
             print('✓ Channel map is provided: 0x%010x' % self.chm)
             self.spinner.text = 'Computing hop interval'
@@ -514,10 +514,10 @@ class CLIConnectionRecovery(ConnectionRecovery):
         Channel map has been recovered.
         """
         self.chm = chm
-        self.spinner.stop_and_persist({
-            'symbol':'✓'.encode('utf-8'),
-            'text':'Channel Map = 0x%010x'%chm
-        })
+        self.spinner.stop_and_persist(
+            symbol='✓'.encode('utf-8'),
+            text='Channel Map = 0x%010x'%chm
+        )
         if self.hop_provided:
             print('✓ Hop interval is provided: %d' % self.hop_interval)
             self.spinner.text = 'Computing hop increment'
@@ -531,10 +531,10 @@ class CLIConnectionRecovery(ConnectionRecovery):
         """
         Hop interval has been recovered.
         """
-        self.spinner.stop_and_persist({
-            'symbol':'✓'.encode('utf-8'),
-            'text':'Hop interval = %d'%interval
-        })
+        self.spinner.stop_and_persist(
+            symbol='✓'.encode('utf-8'),
+            text='Hop interval = %d'%interval
+        )
         self.spinner.text = 'Computing hop increment'
         self.spinner.start()
 
@@ -542,10 +542,10 @@ class CLIConnectionRecovery(ConnectionRecovery):
         """
         Hop increment has been recovered.
         """
-        self.spinner.stop_and_persist({
-            'symbol':'✓'.encode('utf-8'),
-            'text':'Hop increment = %d'%increment
-        })
+        self.spinner.stop_and_persist(
+            symbol='✓'.encode('utf-8'),
+            text='Hop increment = %d'%increment
+        )
         if self._hijack:
             print('[i] Synchronized, hijacking in progress ...')
             self.hijack()
