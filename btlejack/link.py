@@ -8,7 +8,7 @@ from struct import pack, unpack
 from threading import Lock
 from btlejack.packets import (Packet, PacketRegistry, ResetCommand,
     VersionCommand, ScanConnectionsCommand, RecoverCrcInitCommand,
-    ResetResponse, VersionResponse, ScanConnectionsResponse,
+    RecoverResponse, ResetResponse, VersionResponse, ScanConnectionsResponse,
     AccessAddressNotification, SniffConnReqCommand, SniffConnReqResponse,
     ConnectionRequestNotification, EnableJammingCommand, EnableJammingResponse,
     EnableHijackingCommand, EnableHijackingResponse)
