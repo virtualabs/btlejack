@@ -13,7 +13,6 @@ from btlejack.packets import (Packet, PacketRegistry, ResetCommand,
     ConnectionRequestNotification, EnableJammingCommand, EnableJammingResponse,
     EnableHijackingCommand, EnableHijackingResponse)
 
-
 class DeviceError(Exception):
     """
     Device error
