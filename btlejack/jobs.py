@@ -71,8 +71,6 @@ class SingleSnifferInterface(AbstractInterface):
 
         @param access_address   int     target access address
         """
-        #self.link.write(RecoverConnectionCommand(access_address, channel_map, hop_interval))
-        #self.link.wait_packet(RecoverConnectionResponse)
         self.link.write(RecoverCrcInitCommand(access_address))
         self.link.wait_packet(RecoverResponse)
         super().recover_crcinit()

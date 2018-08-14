@@ -6,12 +6,12 @@ from serial import Serial
 from serial.tools.list_ports import comports
 from struct import pack, unpack
 from threading import Lock
-from btlejack.packets import Packet, PacketRegistry, ResetCommand, VersionCommand, \
-    ScanConnectionsCommand, RecoverConnectionCommand, ResetResponse, \
-    VersionResponse, ScanConnectionsResponse, AccessAddressNotification, \
-    RecoverConnectionResponse, SniffConnReqCommand, SniffConnReqResponse, \
-    ConnectionRequestNotification, EnableJammingCommand, EnableJammingResponse, \
-    EnableHijackingCommand, EnableHijackingResponse
+from btlejack.packets import (Packet, PacketRegistry, ResetCommand,
+    VersionCommand, ScanConnectionsCommand, RecoverCrcInitCommand,
+    ResetResponse, VersionResponse, ScanConnectionsResponse,
+    AccessAddressNotification, SniffConnReqCommand, SniffConnReqResponse,
+    ConnectionRequestNotification, EnableJammingCommand, EnableJammingResponse,
+    EnableHijackingCommand, EnableHijackingResponse)
 
 
 class DeviceError(Exception):
@@ -182,7 +182,7 @@ class Link(object):
             if isinstance(pkt, AccessAddressNotification):
                 yield pkt
         """
-        
+
     def recover_connection(self, access_address, channel_map=None, hop_interval=None):
         """
         Recover an existing connection.
