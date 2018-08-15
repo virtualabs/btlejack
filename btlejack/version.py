@@ -11,7 +11,7 @@ should be assigned. Btlejack's firmware shall be updated to reflect this version
 number, and also updated into btlejack's package.
 
 The release number allows small modifications due to a release error or update,
-such as a wrong packaging or typos. 
+such as a wrong packaging or typos.
 """
 VERSION = '1.1'
-RELEASE = '1'
+RELEASE = '2'
