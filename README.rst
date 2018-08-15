@@ -1,7 +1,7 @@
 BtleJack: a new Bluetooth Low Energy swiss-army knife
 #####################################################
 
-Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Energy devices. It relies on one or more [BBC Micro:Bit](http://microbit.org/) devices running a dedicated firmware.
+Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Energy devices. It relies on one or more `BBC Micro:Bit <http://microbit.org/>`_. devices running a dedicated firmware.
 
 **This tool only supports Bluetooth Low Energy 4.x.**
 
