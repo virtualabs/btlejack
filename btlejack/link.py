@@ -8,7 +8,7 @@ from struct import pack, unpack
 from threading import Lock
 from btlejack.packets import (Packet, PacketRegistry, ResetCommand,
     VersionCommand, ScanConnectionsCommand, RecoverCrcInitCommand,
-    ResetResponse, VersionResponse, ScanConnectionsResponse,
+    RecoverResponse, ResetResponse, VersionResponse, ScanConnectionsResponse,
     AccessAddressNotification, SniffConnReqCommand, SniffConnReqResponse,
     ConnectionRequestNotification, EnableJammingCommand, EnableJammingResponse,
     EnableHijackingCommand, EnableHijackingResponse)
@@ -39,7 +39,7 @@ class Link(object):
         # Pick the first serial port that matches a Micro:Bit
         if interface is None:
             for port in comports():
-                if port.subsystem == 'usb':
+                # if port.subsystem == 'usb':
                     if port.vid == 0x0D28 and port.pid == 0x0204:
                         interface = port.device
                         break
