@@ -129,9 +129,8 @@ class MultiSnifferInterface(AbstractInterface):
         self.interfaces = []
         self.devices = []
         for port in comports():
-            if port.subsystem == 'usb':
-                if port.vid == 0x0D28 and port.pid == 0x0204:
-                    self.devices.append(port.device)
+            if port.vid == 0x0D28 and port.pid == 0x0204:
+                self.devices.append(port.device)
         self.active_link = None
         self.connect(max_number_sniffers, baudrate)
         self.reset()
