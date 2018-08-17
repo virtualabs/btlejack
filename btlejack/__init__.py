@@ -50,7 +50,8 @@ def main():
     parser.add_argument(
         '-d',
         '--device',
-        dest='device',
+        dest='devices',
+        action='append',
         type=str,
         help='Micro:Bit device serial port'
     )
@@ -225,7 +226,7 @@ def main():
 
     if args.scan_aa:
         try:
-            supervisor = CLIAccessAddressSniffer(verbose=args.verbose)
+            supervisor = CLIAccessAddressSniffer(verbose=args.verbose, devices=args.devices)
         except DeviceError as error:
             print('[!] Please connect a compatible Micro:Bit in order to use BtleJack')
             sys.exit(-1)
@@ -265,7 +266,8 @@ def main():
                 hop_interval=hop,
                 crc=crc,
                 output=output,
-                verbose=args.verbose
+                verbose=args.verbose,
+                devices=args.devices
             )
         except DeviceError as error:
             print('[!] Please connect a compatible Micro:Bit in order to use BtleJack')
@@ -281,7 +283,8 @@ def main():
             supervisor = CLIConnectionSniffer(
                 bd_addr_int,
                 output=output,
-                verbose=args.verbose
+                verbose=args.verbose,
+                devices=args.devices
             )
         else:
             print('[!] Wrong Bluetooth Address format: %s' % args.connreq)

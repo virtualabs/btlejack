@@ -322,8 +322,8 @@ class PromptThread(Thread):
 
 class CLIAccessAddressSniffer(AccessAddressSniffer):
 
-    def __init__(self, output=None, verbose=None):
-        super().__init__()
+    def __init__(self, devices=None, output=None, verbose=None):
+        super().__init__(devices=devices)
         self.output = output
         self.verbose = verbose
 
@@ -359,8 +359,8 @@ class CLIConnectionSniffer(ConnectionSniffer):
     """
     New connection sniffer.
     """
-    def __init__(self, bd_address='ff:ff:ff:ff:ff:ff', output=None, verbose=False):
-        super().__init__(bd_address)
+    def __init__(self, bd_address='ff:ff:ff:ff:ff:ff', devices=None, output=None, verbose=False):
+        super().__init__(bd_address, devices=devices)
         self.verbose = verbose
         self.output = output
 
@@ -436,13 +436,13 @@ class CLIConnectionRecovery(ConnectionRecovery):
     CLI Connection recovery class.
     """
 
-    def __init__(self, access_address, channel_map=None, crc=None, hop_interval=None, device=None, baudrate=115200, hijack=False, jamming=False, output=None, debug=False, verbose=False):
+    def __init__(self, access_address, channel_map=None, crc=None, hop_interval=None, devices=None, baudrate=115200, hijack=False, jamming=False, output=None, debug=False, verbose=False):
         super().__init__(
             access_address,
             channel_map=channel_map,
             crc=crc,
             hop_interval=hop_interval,
-            device=device,
+            devices=devices,
             baudrate=baudrate
         )
         self.output = output

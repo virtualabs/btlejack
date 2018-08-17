@@ -20,6 +20,7 @@ or simply interact with another user interface.
 from btlejack.jobs import SingleSnifferInterface, MultiSnifferInterface
 from btlejack.session import BtlejackSession, BtlejackSessionError
 from btlejack.packets import *
+from btlejack.link import DeviceError
 
 class Supervisor(object):
     """
@@ -78,10 +79,15 @@ class AccessAddressSniffer(Supervisor):
     access addresses.
     """
 
-    def __init__(self, device=None, baudrate=115200):
+    def __init__(self, devices=None, baudrate=115200):
         super().__init__()
-        if device is not None:
-            self.interface = SingleSnifferInterface(device, baudrate)
+
+        # Pick first device as we don't need more
+        if devices is not None:
+            if len(devices) >= 1:
+                self.interface = SingleSnifferInterface(devices[0], baudrate)
+            else:
+                raise DeviceError('No device provided')
         else:
             self.interface = SingleSnifferInterface()
 
@@ -143,7 +149,7 @@ class ConnectionRecovery(Supervisor):
     STATE_HIJACKED = 7
     STATE_RECOVER_CCHM = 8
 
-    def __init__(self, access_address, channel_map=None, hop_interval=None, crc=None, device=None, baudrate=115200):
+    def __init__(self, access_address, channel_map=None, hop_interval=None, crc=None, devices=None, baudrate=115200):
         super().__init__()
 
         # Retrieve the user session
@@ -153,8 +159,8 @@ class ConnectionRecovery(Supervisor):
             # something went wrong, wont keep the session
             self.session = None
 
-        if device is not None:
-            self.interface = MultiSnifferInterface(3,device, baudrate)
+        if devices is not None:
+            self.interface = MultiSnifferInterface(3, baudrate, devices)
         else:
             self.interface = MultiSnifferInterface(3)
         self.state = self.STATE_RECOVER_CRC
@@ -367,9 +373,9 @@ class ConnectionSniffer(Supervisor):
     STATE_HIJACKING = 3
     STATE_HIJACKED = 4
 
-    def __init__(self, bd_address='ff:ff:ff:ff:ff:ff'):
+    def __init__(self, bd_address='ff:ff:ff:ff:ff:ff', devices=None):
         super().__init__()
-        self.interface = MultiSnifferInterface(3)
+        self.interface = MultiSnifferInterface(3, devices=devices)
         self.interface.sniff_connection(
             bd_address
         )

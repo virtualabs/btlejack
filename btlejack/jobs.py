@@ -124,13 +124,20 @@ class MultiSnifferInterface(AbstractInterface):
     the corresponding resources.
     """
 
-    def __init__(self, max_number_sniffers=1, baudrate=115200):
+    def __init__(self, max_number_sniffers=1, baudrate=115200, devices=None):
         super().__init__(None)
         self.interfaces = []
+
+        # Enumerate available interfaces
         self.devices = []
-        for port in comports():
-            if port.vid == 0x0D28 and port.pid == 0x0204:
-                self.devices.append(port.device)
+        if devices is None:
+            for port in comports():
+                if port.vid == 0x0D28 and port.pid == 0x0204:
+                    self.devices.append(port.device)
+        else:
+            for device in devices:
+                self.devices.append(device)
+
         self.active_link = None
         self.connect(max_number_sniffers, baudrate)
         self.reset()

@@ -37,11 +37,13 @@ class Link(object):
         self.lock = Lock()
 
         # Pick the first serial port that matches a Micro:Bit
+        # if no interface is provided
         if interface is None:
             for port in comports():
                 if port.vid == 0x0D28 and port.pid == 0x0204:
                     interface = port.device
                     break
+
         # If no interface found, we cannot do anything as we need at least
         # one Micro:bit device connected.
         if interface is None:
