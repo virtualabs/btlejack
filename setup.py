@@ -24,6 +24,7 @@ setup(
     author_email = "damien.cauquil@digital.security",
     description = ("Bluetooth Low Energy Swiss-army knife to sniff, jam and hijack connections"),
     long_description = read('README.rst'),
+    url = 'https://github.com/virtualabs/btlejack',
     license = "MIT",
     keywords = "bluetooth smart low energy hijack sniff jam",
     packages=find_packages(),
