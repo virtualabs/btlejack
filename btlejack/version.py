@@ -14,4 +14,4 @@ The release number allows small modifications due to a release error or update,
 such as a wrong packaging or typos.
 """
 VERSION = '1.1'
-RELEASE = '2'
+RELEASE = '3'
