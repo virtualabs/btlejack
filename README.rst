@@ -32,11 +32,28 @@ How to use Btlejack
 
 Using Btlejack is quite easy. Btlejack can:
 
+- use various devices
 - sniff an existing BLE connection
 - sniff new BLE connections
 - jam an existing BLE connection
 - hijack an existing BLE connection
 - export captured packets to various PCAP formats
+
+
+Specify devices to use
+----------------------
+
+Btlejack normally tries to autodetect and use connected compatible devices (Micro:Bit only for the moment), but since the firmware can be hacked or modified
+to work with other nRF51822-based boards, it provides a specific options to allow compatibility with these devices.
+
+The ``-d`` option lets you specify one or more devices with Btlejack. Note that this option will disable the automatic detection of devices, and you should
+add as many devices as you may need:
+
+::
+
+  $ btlejack -d /dev/ttyACM0 -d /dev/ttyACM2 -s
+
+
 
 Sniffing an existing connection
 -------------------------------
@@ -49,8 +66,8 @@ First, find an existing connection to target with ``btlejack``:
   BtleJack version 1.1
 
   [i] Enumerating existing connections ...
-  [ - 54 dBm] 0xcd91d517 | pkts: 1
-  [ - 46 dBm] 0xcd91d517 | pkts: 2
+  [ - 54 dBm] 0xcd91d517 | pkts: 1
+  [ - 46 dBm] 0xcd91d517 | pkts: 2
 
 The first value (in dBm) shows the power of the signal, the greater this value is the better the sniffed connection will be.
 
@@ -255,3 +272,17 @@ You may also need to tell crackle to use a specific cracking strategy, by using 
 ::
 
   $ crackle -i some.pcap -s 1
+
+
+Connection cache
+----------------
+
+Btlejack uses a *connection cache* to store some connection-related value in order to speed up
+things a bit. This connection cache may cause some problems, especially if an access address has
+been previously seen.
+
+This cache can be flushed with the ``-z`` option:
+
+::
+
+  $ btlejack -z

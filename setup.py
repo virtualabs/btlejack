@@ -18,6 +18,7 @@ def get_version():
 
 setup(
     name = "btlejack",
+    python_requires='>3.5.2',
     version = get_version(),
     author = "Damien Cauquil",
     author_email = "damien.cauquil@digital.security",
