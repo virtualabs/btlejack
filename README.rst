@@ -15,17 +15,18 @@ First, install the ``btlejack`` Python3 client software with Pip:
   $ sudo pip3 install btlejack
 
 
-Then, connect your Micro:Bit device to your computer with a USB cable, mount the associated mass storage device, and issue the following command:
+Then, connect your Micro:Bit device to your computer with a USB cable, mount the associated mass storage device (the mount point must contain **MICROBIT**), and issue the following command:
 
 ::
 
   $ btlejack -i
 
-
 This will program every Micro:Bit device connected to your computer, and make
 them ready to use with Btlejack. It will use the correct firmware version for the current client software, so it is highly recommended to perform this firmware installation procedure each time you update Btlejack.
 
 Keep your microbits connected and you're all set !
+
+**NOTE** This only works with posix compatible systems.
 
 How to use Btlejack
 ===================
