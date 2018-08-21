@@ -132,7 +132,10 @@ class MultiSnifferInterface(AbstractInterface):
         self.devices = []
         if devices is None:
             for port in comports():
-                if port.vid == 0x0D28 and port.pid == 0x0204:
+                if type(port) is tuple:
+                    if "VID:PID=0d28:0204" in port[-1]:
+                        self.devices.append(port[0])
+                elif port.vid == 0x0D28 and port.pid == 0x0204:
                     self.devices.append(port.device)
         else:
             for device in devices:
