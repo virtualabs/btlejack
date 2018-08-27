@@ -1,7 +1,8 @@
 BtleJack: a new Bluetooth Low Energy swiss-army knife
 #####################################################
 
-Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Energy devices. It relies on one or more `BBC Micro:Bit <http://microbit.org/>`_. devices running a dedicated firmware.
+Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Energy devices. It relies on one or more `BBC Micro:Bit <http://microbit.org/>`_. devices running a dedicated firmware. You may also
+want to use an `Adafruit's Bluefruit LE sniffer <https://www.adafruit.com/product/2269>`_ or a `nRF51822 Eval Kit <https://www.waveshare.com/wiki/BLE400>`_, as we added support for these devices.
 
 **This tool only supports Bluetooth Low Energy 4.x.**
 
@@ -24,7 +25,9 @@ Then, connect your Micro:Bit device to your computer with a USB cable, mount the
 This will program every Micro:Bit device connected to your computer, and make
 them ready to use with Btlejack. It will use the correct firmware version for the current client software, so it is highly recommended to perform this firmware installation procedure each time you update Btlejack.
 
-Keep your microbits connected and you're all set !
+If you are using a *Bluefruit LE sniffer* or a *nRF51822 Eval Kit*, then please use an external SWD programmer to flash your device with [this firmware](btlejack-firmware/dist/btlejack-firmware-ble400.hex).
+
+Keep your devices connected and you're all set !
 
 **NOTE** This only works with posix compatible systems.
 
