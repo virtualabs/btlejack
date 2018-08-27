@@ -25,7 +25,7 @@ Then, connect your Micro:Bit device to your computer with a USB cable, mount the
 This will program every Micro:Bit device connected to your computer, and make
 them ready to use with Btlejack. It will use the correct firmware version for the current client software, so it is highly recommended to perform this firmware installation procedure each time you update Btlejack.
 
-If you are using a *Bluefruit LE sniffer* or a *nRF51822 Eval Kit*, then please use an external SWD programmer to flash your device with [this firmware](btlejack-firmware/dist/btlejack-firmware-ble400.hex).
+If you are using a *Bluefruit LE sniffer* or a *nRF51822 Eval Kit*, then please use an external SWD programmer to flash your device with `this firmware <https://github.com/virtualabs/btlejack-firmware/raw/1240eb45d00f3a9c61694252eb3ce6b92856e094/dist/btlejack-firmware-ble400.hex>`_.
 
 Keep your devices connected and you're all set !
 
