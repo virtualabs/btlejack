@@ -219,6 +219,8 @@ class ConnectionRecovery(Supervisor):
         #print(packet)
         if isinstance(packet, VerbosePacket) or isinstance(packet, DebugPacket):
             super().on_packet_received(packet)
+        elif isinstance(packet, ConnectionLostNotification):
+            self.on_connection_lost()
         else:
             if self.state == self.STATE_RECOVER_CRC:
                 if isinstance(packet, CrcNotification):
@@ -352,6 +354,12 @@ class ConnectionRecovery(Supervisor):
         """
         pass
 
+    def on_connection_lost(self):
+        """
+        Connection has been lost.
+        """
+        pass
+
     def send_packet(self, packet):
         """
         Send a BLE LL packet.
@@ -376,12 +384,9 @@ class ConnectionSniffer(Supervisor):
     def __init__(self, bd_address='ff:ff:ff:ff:ff:ff', devices=None):
         super().__init__()
         self.interface = MultiSnifferInterface(3, devices=devices)
-        self.interface.sniff_connection(
-            bd_address
-        )
-        self.state = self.STATE_SYNCING
-        self.access_address = None
-        self.sent_packet = False
+        self.bd_address = bd_address
+
+        self.sniff()
 
         # Retrieve the user session
         try:
@@ -390,6 +395,17 @@ class ConnectionSniffer(Supervisor):
             # something went wrong, wont keep the session
             self.session = None
 
+
+    def sniff(self):
+        """
+        Start sniffing for new connections.
+        """
+        self.interface.sniff_connection(
+            self.bd_address
+        )
+        self.state = self.STATE_SYNCING
+        self.access_address = None
+        self.sent_packet = False
 
     def jam(self):
         """
@@ -419,6 +435,8 @@ class ConnectionSniffer(Supervisor):
         """
         if isinstance(packet, VerbosePacket) or isinstance(packet, DebugPacket):
             super().on_packet_received(packet)
+        elif isinstance(packet, ConnectionLostNotification):
+            self.on_connection_lost()
         else:
             if self.state == self.STATE_SYNCING:
                 if isinstance(packet, ConnectionRequestNotification):
@@ -486,6 +504,12 @@ class ConnectionSniffer(Supervisor):
     def on_hijacking_failed(self):
         """
         Could not hijack this connection.
+        """
+        pass
+
+    def on_connection_lost(self):
+        """
+        Connection has been lost.
         """
         pass
 

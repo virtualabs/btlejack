@@ -315,6 +315,9 @@ class PromptThread(Thread):
             else:
                 sys.stdout.write('\nCommand not found\n')
 
+    def cancel(self):
+        self.canceled = True
+
     def run(self):
         while not self.canceled:
             self.prompt()
@@ -369,7 +372,7 @@ class CLIConnectionSniffer(ConnectionSniffer):
         print('[i] Detected sniffers:')
         for i, version in enumerate(versions):
             print(' > Sniffer #%d: version %d.%d' % (i, version[0], version[1]))
-            if major != version[0] and minor != version[1]:
+            if (major == version[0] and (minor > version[1])) or (major > version[0]):
                 print(' -!!!- You must update the firmware of this sniffer -!!!-')
                 raise SnifferUpgradeRequired()
 
@@ -430,6 +433,13 @@ class CLIConnectionSniffer(ConnectionSniffer):
         if self.verbose:
             print('> '+ str(packet.message))
 
+    def on_connection_lost(self):
+        """
+        Connection lost.
+        """
+        print('[!] Connection lost, sniffing again...')
+        self.sniff()
+
 
 class CLIConnectionRecovery(ConnectionRecovery):
     """
@@ -459,7 +469,7 @@ class CLIConnectionRecovery(ConnectionRecovery):
         print('[i] Detected sniffers:')
         for i, version in enumerate(versions):
             print(' > Sniffer #%d: fw version %d.%d' % (i, version[0], version[1]))
-            if major != version[0] and minor != version[1]:
+            if (major == version[0] and (minor > version[1])) or (major > version[0]):
                 print(' -!!!- You must update the firmware of this sniffer -!!!-')
                 raise SnifferUpgradeRequired()
 
@@ -589,4 +599,26 @@ class CLIConnectionRecovery(ConnectionRecovery):
         """
         Hijack terminated callback
         """
+        #raise ForcedTermination()
+
+    def on_packet_received(self, packet):
+        if self._pt is not None and self._pt.canceled:
+            self._pt.join()
+            raise ForcedTermination()
+        else:
+            super().on_packet_received(packet)
+
+
+    def on_connection_lost(self):
+        """
+        Connection lost.
+        """
+        # if we were hijacking, close PromptThread
+        if self._pt is not None:
+            # Kill prompt thread and wait for its termination.
+            self._pt.cancel()
+            self._pt.join()
+
+        # Okay, we exit here.
+        print('[!] Connection lost.')
         raise ForcedTermination()
