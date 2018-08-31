@@ -6,6 +6,13 @@ want to use an `Adafruit's Bluefruit LE sniffer <https://www.adafruit.com/produc
 
 **This tool only supports Bluetooth Low Energy 4.x.**
 
+Requirements
+============
+
+You need a UNIX based system (for example a Raspberry Pi). If you use the BBC Micro:Bit, you will need one to three Micro:Bit devices (three devices recommended) and for each device one free USB port. The power consumption of a Micro:Bit is rather low, so you can use a single USB port and a passive hub for powering the three recommended units.
+
+**If you connect 3 microbits at the same time on your computer, Btlejack will be able to sniff on every advertising channel and has far more chance to capture the connection request.**
+
 How to install
 ==============
 
@@ -136,8 +143,6 @@ or you may also want to specify the target BD address:
 
   $ btlejack -c 03:e1:f0:00:11:22
 
-
-**If you connect at least 3 microbits at the same time on your computer, Btlejack will be able to sniff on every advertising channels and has far more chance to capture the connection request.**
 
 Jamming a connection
 --------------------
