@@ -179,13 +179,15 @@ def main():
 
 
         if os.name == 'posix':
-            mount_output = check_output('mount').splitlines()
-            mounted_volumes = [x.split()[2] for x in mount_output]
+            mount_output = check_output(['mount', '-l']).splitlines()
+            mounted_volumes = [x.split() for x in mount_output]
             flashed = 0
             for volume in mounted_volumes:
-                if re.match(b'.*MICROBIT[0-9]*$', volume):
-                    print('[i] Flashing %s ...' % volume.decode('ascii'))
-                    path = os.path.join(volume.decode('ascii'),'fw.hex')
+                mount_point = volume[2]
+                device_name = volume[-1]
+                if re.match(b'.*MICROBIT[0-9]*', device_name):
+                    print('[i] Flashing %s ...' % mount_point.decode('ascii'))
+                    path = os.path.join(mount_point.decode('ascii'),'fw.hex')
                     fw = open(fw_path,'r').read()
                     # copy our firmware on it
                     with open(path, 'wb') as output:
