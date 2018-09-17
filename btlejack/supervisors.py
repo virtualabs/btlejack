@@ -160,9 +160,9 @@ class ConnectionRecovery(Supervisor):
             self.session = None
 
         if devices is not None:
-            self.interface = MultiSnifferInterface(3, baudrate, devices)
+            self.interface = MultiSnifferInterface(len(devices), baudrate, devices)
         else:
-            self.interface = MultiSnifferInterface(3)
+            self.interface = MultiSnifferInterface(999)
         self.state = self.STATE_RECOVER_CRC
         self.chm_provided = (channel_map is not None)
         self.crc_provide = (crc is not None)
