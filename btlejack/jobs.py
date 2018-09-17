@@ -75,14 +75,14 @@ class SingleSnifferInterface(AbstractInterface):
         self.link.wait_packet(RecoverResponse)
         super().recover_crcinit()
 
-    def recover_chm(self, access_address, crcinit, start, stop):
+    def recover_chm(self, access_address, crcinit, start, stop, timeout):
         """
         Recover channel map (distributed over sniffers)
 
         @param access_address   int     target access address
         @param crcinit          int     CRCInit value
         """
-        self.link.write(RecoverChmCommand(access_address, crcinit, start, stop))
+        self.link.write(RecoverChmCommand(access_address, crcinit, start, stop, timeout))
         self.link.wait_packet(RecoverResponse)
         super().recover_chm()
 
@@ -214,6 +214,8 @@ class MultiSnifferInterface(AbstractInterface):
     def enable_hijacking(self, enabled=False):
         if self.active_link is not None:
             self.active_link.enable_hijacking(enabled)
+        else:
+            print('[!] No active link')
 
     def sniff_connection(self, bd_address):
         """
@@ -262,8 +264,9 @@ class MultiSnifferInterface(AbstractInterface):
         link.set_timeout(0.1)
         if link is not None:
             link.recover_hop(access_address, crcinit, chm)
+        super().recover_hop()
 
-    def recover_chm(self, access_address, crcinit):
+    def recover_chm(self, access_address, crcinit, timeout=0):
         # compute how many devices we have
         nb_devices = len(self.interfaces)
         self.active_link = None
@@ -282,7 +285,7 @@ class MultiSnifferInterface(AbstractInterface):
         for i,link in enumerate(self.interfaces):
             link.reset()
             link.set_timeout(0.1)
-            link.recover_chm(access_address, crcinit, ranges[i][0], ranges[i][1])
+            link.recover_chm(access_address, crcinit, ranges[i][0], ranges[i][1], timeout)
         super().recover_chm()
 
     def read_packet(self):

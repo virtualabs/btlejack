@@ -405,15 +405,16 @@ class RecoverChmCommand(Packet):
     """
     Recover connection's channel map command.
     """
-    def __init__(self, access_address, crcinit, start, stop):
-        params = pack('<BIBBBBB',
+    def __init__(self, access_address, crcinit, start, stop, timeout=0):
+        params = pack('<BIBBBBBI',
             1, # operation type is CHM recovery
             access_address,
             crcinit & 0xff,
             (crcinit & 0xff00) >> 8,
             (crcinit & 0xff0000) >> 16,
             start,
-            stop
+            stop,
+            timeout
         )
         super().__init__(Packet.OP_RECOVER, params, Packet.F_CMD)
 

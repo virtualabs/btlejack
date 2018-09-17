@@ -149,7 +149,7 @@ class ConnectionRecovery(Supervisor):
     STATE_HIJACKED = 7
     STATE_RECOVER_CCHM = 8
 
-    def __init__(self, access_address, channel_map=None, hop_interval=None, crc=None, devices=None, baudrate=115200):
+    def __init__(self, access_address, channel_map=None, hop_interval=None, crc=None, devices=None, baudrate=115200, timeout=0):
         super().__init__()
 
         # Retrieve the user session
@@ -174,6 +174,7 @@ class ConnectionRecovery(Supervisor):
         self.crc = crc
         self.cchm_notifications = 0
         self.cchm = 0
+        self.timeout = timeout
 
         # Launch recovery based on the provided informations.
         if self.crc is not None:
@@ -191,7 +192,7 @@ class ConnectionRecovery(Supervisor):
                 self.interface.recover_hop(access_address, self.crc, self.chm)
             else:
                 self.state = self.STATE_RECOVER_CCHM
-                self.interface.recover_chm(access_address, self.crc)
+                self.interface.recover_chm(access_address, self.crc, self.timeout)
         else:
             self.state = self.STATE_RECOVER_CRC
             self.interface.recover_crcinit(access_address)
@@ -257,7 +258,8 @@ class ConnectionRecovery(Supervisor):
                             # and ask for a collaborative channel mapping
                             self.interface.recover_chm(
                                 self.access_address,
-                                self.crc
+                                self.crc,
+                                self.timeout
                             )
                         else:
                             # otherwise, we continue with the 'normal' way

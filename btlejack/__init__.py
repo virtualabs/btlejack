@@ -168,6 +168,15 @@ def main():
         help='Install latest version of firmware on every sniffer'
     )
 
+    parser.add_argument(
+        '-n',
+        '--timeout',
+        dest='timeout',
+        default=0,
+        type=int,
+        help='Channel map recovery timeout'
+    )
+
     args = parser.parse_args()
     supervisor = None
 
@@ -270,7 +279,8 @@ def main():
                     crc=crc,
                     output=output,
                     verbose=args.verbose,
-                    devices=args.devices
+                    devices=args.devices,
+                    timeout=args.timeout
                 )
             except SnifferUpgradeRequired as su:
                 print("[i] Quitting, please upgrade your sniffer firmware (-i option if you are using a Micro:Bit)")
