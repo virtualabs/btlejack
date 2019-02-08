@@ -437,7 +437,10 @@ class CLIConnectionSniffer(ConnectionSniffer):
         """
         Connection lost.
         """
-        print('[!] Connection lost, sniffing again...')
+        print('[!] Connection lost, initializing...')
+        super().__init__(self.bd_address)
+
+        print('[!] Sniffing again...')
         self.sniff()
 
 
