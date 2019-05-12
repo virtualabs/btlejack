@@ -106,7 +106,7 @@ class SingleSnifferInterface(AbstractInterface):
         self.link.wait_packet(SniffConnReqResponse)
         super().sniff_connection()
 
-    def read_packet(self):
+    def read_packet_nowait(self):
         """
         Read packet if one is ready (asynchroous)
         """
@@ -115,6 +115,11 @@ class SingleSnifferInterface(AbstractInterface):
         if packet is not None:
             packets.append(packet)
         return packets
+
+    def read_packet(self):
+        if AbstractInterface.wait_for_readeable_interfaces([self]):
+            return self.read_packet_nowait()
+        return []
 
 class MultiSnifferInterface(AbstractInterface):
     """
@@ -292,29 +297,25 @@ class MultiSnifferInterface(AbstractInterface):
         """
         Read packet(s) if one is ready (asynchroous)
         """
+        readable_links = AbstractInterface.wait_for_readeable_interfaces(self.interfaces)
+
         packets = []
         if (self.mode == self.MODE_RECOVER_CHM):
-            for link in self.interfaces:
-                if not link.is_idling():
-                    pkts = link.read_packet()
-                    if len(pkts) > 0:
-                        packets.extend(pkts)
-            return packets
+            for link in readable_links:
+                pkts = link.read_packet_nowait()
+                packets.extend(pkts)
         else:
             if self.active_link is None:
-                for link in self.interfaces:
-                    if not link.is_idling():
-                        pkts = link.read_packet()
-                        if len(pkts) > 0:
-                            self.active_link = link
-                            self.active_link.link.interface.timeout = 0.1
-                            packets.extend(pkts)
-                return packets
+                for link in readable_links:
+                    pkts = link.read_packet_nowait()
+                    if len(pkts) > 0:
+                        self.active_link = link
+                        self.active_link.link.interface.timeout = 0.1
+                        packets.extend(pkts)
             else:
-                pkts = self.active_link.read_packet()
-                if len(pkts) > 0:
-                    return pkts
-                return []
+                if self.active_link in readable_links:
+                    return self.active_link.read_packet_nowait()
+        return packets
 
     def send_packet(self, packet):
         """

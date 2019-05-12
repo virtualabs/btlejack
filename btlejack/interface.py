@@ -4,6 +4,8 @@ Packet interface.
 Links the link layer to UI.
 """
 
+from btlejack.link import Link
+
 class AbstractInterface(object):
     """
     Sniffer/Hijacker abstract class.
@@ -111,6 +113,12 @@ class AbstractInterface(object):
         Switch to collaborative channel mapping mode.
         """
         self.mode = self.MODE_CCHM
+
+    @staticmethod
+    def wait_for_readeable_interfaces(interfaces, timeout=1.0):
+        links = [interface.link for interface in interfaces]
+        readables = Link.wait_for_readeable_links(links)
+        return [interface for interface in interfaces if interface.link in readables]
 
     def read_packet(self):
         """
