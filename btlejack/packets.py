@@ -71,7 +71,7 @@ class Packet(object):
     OP_RECOVER = 0x04
 
     OP_RECOVER_AA = 0x04
-    OP_RECOVER_AA_CHM = 0x05
+    OP_RECOVER_AA_CHM = OP_ADVERTISEMENTS = 0x05
     OP_RECOVER_AA_CHM_HOPINTER = 0x06
 
     OP_SNIFF_CONREQ = 0x07
@@ -96,6 +96,7 @@ class Packet(object):
     N_PACKET_NORDIC = 0x07
     N_HIJACK_STATUS = 0x08
     N_CONN_LOST = 0x09
+    N_ADVERTISEMENTS = 0x0A
 
     def __init__(self, operation, data, flags):
         """
@@ -392,6 +393,120 @@ class AccessAddressNotification(Packet):
         return AccessAddressNotification(channel, rssi, access_address)
 
 
+class EnableAdvertisementsSniffingCommand(Packet):
+    """
+    Enable Advertisements Sniffing command.
+    """
+    def __init__(self, channel):
+        # operation 0x03: enable sniffing
+        payload = pack('<BB', 0x03, channel)
+        super().__init__(Packet.OP_ADVERTISEMENTS, payload, Packet.F_CMD)
+
+class DisableAdvertisementsSniffingCommand(Packet):
+    """
+    Disable Advertisements Sniffing command.
+    """
+    def __init__(self):
+        # operation 0x04: disable sniffing
+        payload = pack('B', 0x04)
+        super().__init__(Packet.OP_ADVERTISEMENTS, payload, Packet.F_CMD)
+
+
+class ResetFilteringPolicyCommand(Packet):
+    """
+    Reset Filtering Policy command.
+    """
+    def __init__(self, policy="blacklist"):
+        self.policy_value = 0x00 if policy == "blacklist" else 0x01
+        # operation 0x00: reset filtering policy
+        payload = pack('<BB', 0x00, self.policy_value)
+        super().__init__(Packet.OP_ADVERTISEMENTS, payload, Packet.F_CMD)
+
+class AddRuleCommand(Packet):
+    """
+    Add Rule command.
+    """
+    def __init__(self,pattern=b"",mask=b"",position=None):
+        
+        self.length = len(pattern)
+        self.pattern = pattern
+        self.mask = mask if len(mask) == len(pattern) else b"\xFF"*len(pattern)
+        self.position = 0xFF if position is None else position
+        # operation 0x02: add rule
+        payload = pack('<BB', 0x02, self.length)
+        payload += pattern+mask+bytes([self.position])
+
+        super().__init__(Packet.OP_ADVERTISEMENTS, payload, Packet.F_CMD)
+
+class EnableReactiveJammingCommand(Packet):
+    """
+    Enable Reactive Jamming command.
+    """
+    def __init__(self,pattern=b"",position=0,channel=37):
+        
+        self.length = len(pattern)
+        self.pattern = pattern
+        self.position = position
+        self.channel = channel
+        # operation 0x05: enable reactive jamming
+        payload = pack('<BBBB', 0x05, self.channel,self.position,self.length)
+        payload += pattern
+        
+        super().__init__(Packet.OP_ADVERTISEMENTS, payload, Packet.F_CMD)
+
+class DisableReactiveJammingCommand(Packet):
+    """
+    Disable Reactive Jamming command.
+    """
+    def __init__(self):
+        
+        # operation 0x06: disable reactive jamming
+        payload = pack('B', 0x06)
+        super().__init__(Packet.OP_ADVERTISEMENTS, payload, Packet.F_CMD)
+
+@register_packet(Packet.OP_ADVERTISEMENTS, Packet.F_CMD | Packet.F_RESP)
+class AdvertisementsResponse(Packet):
+    """
+    Advertisements response.
+    """
+    def __init__(self, operation, response_type=0, status=0,data=bytes()):
+        self.operation = operation
+        self.response_type = response_type
+        self.status = status
+        self.data = data
+        if response_type == 0x03 or response_type == 0x04:
+            super().__init__(Packet.OP_ADVERTISEMENTS, pack('BB', response_type,status), Packet.F_CMD | Packet.F_RESP)
+        else:
+            pass
+
+    def __str__(self):
+        return "<pkt> Advertisement response"
+
+    @staticmethod
+    def from_raw(packet):
+        response_type = packet.data[0]
+        status = packet.data[1]
+        return AdvertisementsResponse(packet.operation,response_type=response_type,status=status,data=packet.data)
+
+class CrcNotification(Packet):
+    """
+    Crc notification
+    """
+    def __init__(self, access_address, crc):
+        """
+        Constructor
+        """
+        self.access_address = access_address
+        self.crc = crc
+        payload = pack('<II', access_address, crc)
+        super().__init__(Packet.N_CRC, payload, Packet.F_NOTIFICATION)
+
+    @staticmethod
+    def from_raw(packet):
+        access_address, crc = unpack('<II', packet.data[:8])
+        return CrcNotification(access_address, crc)
+
+
 class RecoverCrcInitCommand(Packet):
     """
     Recover connection's CRCInit value command.
@@ -685,6 +800,24 @@ class NordicTapPacketNotification(Packet):
     @staticmethod
     def from_raw(packet):
         return NordicTapPacketNotification(packet.data)
+
+
+
+@register_packet(Packet.N_ADVERTISEMENTS, Packet.F_NOTIFICATION)
+class AdvertisementsPacketNotification(Packet):
+    def __init__(self, data):
+        """
+        Parse header
+        """
+        self.header_len, self.channel = unpack('<BB', data[:2])
+        self.crc_ok, self.rssi = unpack('<BB', data[2:4])
+        self.data = data
+        self.payload = data[4:]
+        return super().__init__(Packet.N_ADVERTISEMENTS, self.data, Packet.F_NOTIFICATION)
+
+    @staticmethod
+    def from_raw(packet):
+        return AdvertisementsPacketNotification(packet.data)
 
 
 @register_packet(Packet.N_HIJACK_STATUS, Packet.F_NOTIFICATION)

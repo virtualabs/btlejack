@@ -57,6 +57,12 @@ class Link(object):
         self.interface = Serial(interface, baudrate, timeout=0)
         self.rx_buffer = bytes()
 
+    def flush(self):
+        """
+        Flush the serial port.
+        """
+        self.interface.flush()
+
     def set_timeout(self, timeout):
         """
         Set interface timeout.
@@ -151,6 +157,8 @@ class Link(object):
         Reset sniffer.
         """
         pkt = ResetCommand()
+        self.set_timeout(0.2)
+        self.flush()
         self.write(pkt)
         self.wait_packet(ResetResponse)
 
@@ -158,6 +166,8 @@ class Link(object):
         """
         Get sniffer version.
         """
+        self.set_timeout(0.2)
+        self.flush()
         self.write(VersionCommand())
         pkt = self.wait_packet(VersionResponse)
         return (pkt.major, pkt.minor)

@@ -18,6 +18,8 @@ class AbstractInterface(object):
     MODE_RECOVER_CRC = 5
     MODE_RECOVER_CHM = 6
     MODE_RECOVER_HOP = 7
+    MODE_ADVERTISEMENTS_SNIFFING = 8
+    MODE_ADVERTISEMENTS_JAMMING = 9
 
     def __init__(self, link):
         """
@@ -38,6 +40,12 @@ class AbstractInterface(object):
 
     def is_sniffing(self):
         return (self.mode == self.MODE_SNIFFING)
+
+    def is_advertisements_sniffing(self):
+        return (self.mode == self.MODE_ADVERTISEMENTS_SNIFFING)
+
+    def is_advertisements_jamming(self):
+        return (self.mode == self.MODE_ADVERTISEMENTS_JAMMING)
 
     def get_link(self):
         return self.link
@@ -75,6 +83,19 @@ class AbstractInterface(object):
         Switch the link in scanning mode.
         """
         self.mode = self.MODE_SCANNING
+
+
+    def sniff_advertisements(self):
+        """
+        Switch the link in advertisements sniffing mode.
+        """
+        self.mode = self.MODE_ADVERTISEMENTS_SNIFFING
+
+    def jam_advertisements(self):
+        """
+        Switch the link in advertisements jamming mode.
+        """
+        self.mode = self.MODE_ADVERTISEMENTS_JAMMING
 
     def recover_crcinit(self):
         """
