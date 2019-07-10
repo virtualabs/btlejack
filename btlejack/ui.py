@@ -5,10 +5,11 @@ from time import time
 from threading import Thread, Lock
 from halo import Halo
 
-from .supervisors import ConnectionRecovery, AccessAddressSniffer, ConnectionSniffer
+from .supervisors import ConnectionRecovery, AccessAddressSniffer, ConnectionSniffer,AdvertisementsSniffer,AdvertisementsJammer
 from .pcap import PcapBleWriter, PcapNordicTapWriter, PcapBlePHDRWriter
 from .helpers import bytes_to_bd_addr
 
+from .dissect.advertisements import *
 from .dissect.att import *
 from .dissect.l2cap import *
 
@@ -322,6 +323,95 @@ class PromptThread(Thread):
         while not self.canceled:
             self.prompt()
         self.supervisor.hijack_done()
+
+
+class CLIAdvertisementsJammer(AdvertisementsJammer):
+
+    def __init__(self, devices=None, output=None, verbose=None,channel=37,pattern=b"",position=0):
+        super().__init__(devices=devices,channel=channel,pattern=pattern,position=position)
+        self.output = output
+        self.verbose = verbose
+
+        # Display sniffer version
+        major,minor = [int(v) for v in VERSION.split('.')]
+        versions = self.interface.get_version()
+        print('[i] Detected sniffers:')
+        for i, version in enumerate(versions):
+            print(' > Sniffer #%d: fw version %d.%d' % (i, version[0], version[1]))
+            if (major == version[0] and (minor > version[1])) or (major > version[0]):
+                print(' -!!!- You must update the firmware of this sniffer -!!!-')
+                raise SnifferUpgradeRequired()
+
+        print('[i] Starting advertisements reactive jamming on channel '+str(self.channel)+' ...')
+
+    def on_adv_jammed(self):
+        print("Advertisement jammed !")
+
+class CLIAdvertisementsSniffer(AdvertisementsSniffer):
+
+    def __init__(self, devices=None, output=None, verbose=None,channel=37,policy={"policy_type":"blacklist","rules":[]},accept_invalid_crc=False,display_raw=False):
+        super().__init__(devices=devices,channel=channel,policy=policy,accept_invalid_crc=accept_invalid_crc)
+        self.output = output
+        self.verbose = verbose
+        self.display_raw = display_raw
+        # Display sniffer version
+        major,minor = [int(v) for v in VERSION.split('.')]
+        versions = self.interface.get_version()
+        print('[i] Detected sniffers:')
+        for i, version in enumerate(versions):
+            print(' > Sniffer #%d: fw version %d.%d' % (i, version[0], version[1]))
+            if (major == version[0] and (minor > version[1])) or (major > version[0]):
+                print(' -!!!- You must update the firmware of this sniffer -!!!-')
+                raise SnifferUpgradeRequired()
+
+        print('[i] Starting advertisements sniffing on channel '+str(self.channel)+' ...')
+
+    def on_adv_packet(self, packet):
+        """
+        Called when a BLE LL advertisement packet is captured.
+        """
+
+        timestamp = time()
+        ts_sec = int(timestamp)
+        ts_usec = int((timestamp - ts_sec)*1000000)
+        if self.output is not None:
+            # Generate a fake header according to the information provided
+            fake_hdr = bytes([
+                                  len(packet.payload), # length
+                                  0x01,                # direction
+                                  packet.channel,      # channel
+                                  packet.rssi,         # rssi
+                                  0x00,0x00,           # event counter
+                                  0x00,0x00,0x00,0x00  # delta
+                                 ])
+            # Is it a Nordic Tap output format ?
+            if isinstance(self.output, PcapNordicTapWriter) or isinstance(self.output, PcapBlePHDRWriter):  
+                self.output.write_packet(ts_sec, ts_usec, 0x8E89BED6, fake_hdr+packet.data[4:])
+            else:
+                self.output.write_packet(ts_sec, ts_usec, 0x8E89BED6, fake_hdr+packet.data[4:])
+ 
+        # Generate a display using the dissector or as a raw sequence of bytes
+        pkt_hex = ' '.join(['%02x' % c for c in packet.data[4:]])   
+        if self.display_raw:
+            
+            print('[LL Data|CRC: '+("ok" if packet.crc_ok == 0x01 else "nok")+"|RSSI:-"+str(packet.rssi)+"dBm|CH:"+str(packet.channel)+"] "+ pkt_hex)
+        else:
+            print("[CRC:"+("ok" if packet.crc_ok == 0x01 else "nok")+"|RSSI:-"+str(packet.rssi)+"dBm|CH:"+str(packet.channel)+"] "+str(Advertisement.from_bytes(packet.data[4:])))
+
+        
+    def on_verbose(self, packet):
+        """
+        Called when a verbose packet is received from the sniffer.
+        """
+        if self.verbose:
+            print('> '+ str(packet))
+
+    def on_debug(self, packet):
+        """
+        Called when a debug packet is received from the sniffer.
+        """
+        print('D:'+str(packet))
+
 
 class CLIAccessAddressSniffer(AccessAddressSniffer):
 

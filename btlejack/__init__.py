@@ -19,9 +19,9 @@ from subprocess import check_output
 from argparse import ArgumentParser
 
 from btlejack.pcap import PcapBleWriter, PcapNordicTapWriter,  PcapBlePHDRWriter
-from btlejack.ui import (CLIAccessAddressSniffer, CLIConnectionRecovery,
-                         CLIConnectionSniffer, ForcedTermination,
-                         SnifferUpgradeRequired)
+from btlejack.ui import (CLIAccessAddressSniffer, CLIConnectionRecovery, CLIConnectionSniffer,
+                         CLIAdvertisementsSniffer,CLIAdvertisementsJammer,
+                         ForcedTermination, SnifferUpgradeRequired)
 from btlejack.helpers import *
 from btlejack.link import DeviceError
 from btlejack.version import VERSION
@@ -76,6 +76,55 @@ def main():
     )
 
     parser.add_argument(
+        '--sniff_adv',
+        '--sniff_advertisements',
+        dest='sniff_advertisements',
+        type=str,
+        help='Sniff advertisements'
+    )
+
+    parser.add_argument(
+        '--jam_adv',
+        '--jam_advertisements',
+        dest='jam_advertisements',
+        type=str,
+        help='Jam advertisements'
+    )
+
+    parser.add_argument(
+        '--policy_type',
+        '--filtering_policy_type',
+        dest='policy_type',
+        type=str,
+        help='Defines the type of filtering policy (blacklist or whitelist) to use'
+    )
+
+    parser.add_argument(
+        '--accept_invalid_crc',
+        dest='accept_invalid_crc',
+        action='store_true',
+        default=False,
+        help='Indicates if the invalid packets are accepted or dropped'
+    )
+
+
+    parser.add_argument(
+        '--raw',
+        dest='raw',
+        default=False,
+        action='store_true',
+        help='Displays the frames as a succession of bytes.'
+    )
+
+    parser.add_argument(
+        '--channel',
+        dest='channel',
+        type=int,
+        default=37,
+        help='Set channel'
+    )
+
+    parser.add_argument(
         '-c',
         '--connreq',
         dest='connreq',
@@ -91,6 +140,7 @@ def main():
         default=None,
         help='Set channel map'
     )
+
 
     parser.add_argument(
         '-p',
@@ -307,6 +357,140 @@ def main():
                 print("[i] Quitting, please upgrade your sniffer firmware (-i option if you are using a Micro:Bit)")
         else:
             print('[!] Wrong Bluetooth Address format: %s' % args.connreq)
+
+    elif args.sniff_advertisements is not None:
+        """
+        Btlejack allows to use a filtering policy in order to accept or drop specific advertisements.
+        It may be useful in order to focus on a specific device, if you want to focus on a specific behaviour, etc.
+	The policy can provide a whitelist mode (the rules define the allowed frames) or a blacklist mode
+        (the rules define the dropped frames). By default, the whitelist mode is in use, but you can easily change it with
+        the --policy_type parameter :
+        $ btlejack --policy_type=blacklist --sniff_adv=<rules>
+
+        Multiple rules can be provided, separated by commas: 
+        $ btlejack --sniff_adv=<rule1>,<rule2>,<rule3>
+
+        First of all, if you want to accept every received frame, you can use "any" or "FF:FF:FF:FF:FF:FF" :
+        $ btlejack --sniff_adv=any
+
+        You may also want to focus on specific devices by providing their BD addresses :
+        $ btlejack --sniff_adv=11:22:33:44:55:66
+        $ btlejack --sniff_adv=11:22:33:44:55:66,aa:bb:cc:dd:ee:ff
+
+        If you want to focus on some specific type of frames, you can provide their respective name :
+        $ btlejack --sniff_adv=SCAN_REQ,SCAN_RSP
+        $ btlejack --sniff_adv=CONNECT_REQ
+
+        You can also provide a raw pattern as a *limited* regular expression to match a part of the link layer frame. 
+        You can use ? to ignore a specific symbol, and * to specify that some information are missing at the beginning
+        of the frame :
+        $ btlejack --sniff_adv=?5??665544332211          (matches the CONNECT_REQ transmitted by 11:22:33:44:55:66)
+        $ btlejack --sniff_adv=*69546167                 (matches the frames containing the string "iTag")
+
+        If you know where is the position of the pattern in the packet, you can provide it using the syntax <pattern>:<position>:
+        $ btlejack --sniff_adv=665544332211aabbccddeeff:2 (matches the SCAN_REQ and CONNECT_REQ transmitted by 11:22:33:44:55:66
+                                                           to aa:bb:cc:dd:ee:ff)
+
+        The channel can be provided using --channel=37. If multiple sniffers are found, they are set to different channels to
+        monitor every advertisements channels.
+ 
+        """
+
+        result = {"policy_type":"whitelist","rules":[]}
+
+        pattern_list = args.sniff_advertisements.split(",")
+
+        adv_types = {
+	        "ADV_IND":{"position":0,"pattern":b"\x00","mask":b"\x0F"},
+	        "ADV_DIRECT_IND":{"position":0,"pattern":b"\x01","mask":b"\x0F"},
+	        "ADV_NONCONN_IND":{"position":0,"pattern":b"\x02","mask":b"\x0F"},
+	        "SCAN_REQ":{"position":0,"pattern":b"\x03","mask":b"\x0F"},
+	        "SCAN_RSP":{"position":0,"pattern":b"\x04","mask":b"\x0F"},
+	        "CONNECT_REQ":{"position":0,"pattern":b"\x05","mask":b"\x0F"},
+	        "ADV_SCAN_IND":{"position":0,"pattern":b"\x06","mask":b"\x0F"}
+        }
+
+        # For every pattern in the rule's list :
+        for pattern in pattern_list:
+            # If pattern is "any" or "FF:FF:FF:FF:FF:FF", the policy type is "blacklist" with no rules.
+            if pattern == "any" or pattern.lower() == "ff:ff:ff:ff:ff:ff":
+                result["policy_type"] = "blacklist"
+                result["rules"] = []
+                break
+            elif re.match("^([a-fA-F0-9][a-fA-F0-9]:){5}[a-fA-F0-9][a-fA-F0-9]$",pattern):
+                # If pattern is a BD address, add a rule matching the pattern anywhere in the frame.
+                result["rules"].append({"pattern":bytes.fromhex(''.join([i for i in pattern.split(":")][::-1])),"mask":b"\xFF"*6,"position":0xFF})
+            elif re.match("^[a-fA-F0-9\?]*:[0-9]+$",pattern) or re.match("^(\*)?[a-fA-F0-9\?]*(\*)?$",pattern) :
+                # If a regexp-like pattern is provided, generate the corresponding rule.
+                if ":" in pattern:
+                    position = int(pattern.split(":")[1])
+                    pattern = pattern.split(":")[0]
+                else:
+                    if "*"==pattern[0]:
+                        position = 0xFF
+                    else:
+                        position = 0
+                value = ""
+                mask = ""   
+                for char in pattern:
+                    if char == "?":
+                        value += "0"
+                        mask += "0"
+                    elif char != "*":
+                        value += char
+                        mask += "f"
+        
+                if len(value) % 2 == 0 and len(mask) == len(value):
+                    value = bytes.fromhex(value)
+                    mask = bytes.fromhex(mask)
+                    result["rules"].append({"pattern":value,"mask":mask,"position":position})
+            elif pattern in adv_types.keys():
+                    # If pattern is a type, use the corresponding rule in adv_types.
+                    result["rules"].append(adv_types[pattern])
+
+            # Set the policy according to the --policy_type parameter
+            result["policy"] = "whitelist" if args.policy_type is None else (args.policy_type if args.policy_type in ("blacklist","whitelist") else "whitelist")
+
+        try:
+            # Instanciate the supervisor
+            supervisor = CLIAdvertisementsSniffer(verbose=args.verbose, devices=args.devices,output=output,channel=args.channel,policy=result,accept_invalid_crc=args.accept_invalid_crc, display_raw = args.raw)
+        except DeviceError as error:
+            print('[!] Please connect a compatible Micro:Bit in order to use BtleJack')
+            sys.exit(-1)  
+
+    elif args.jam_advertisements is not None:
+        """
+        Btlejack allows to reactively jam some advertisements frames according to a specific pattern in the Link Layer frame.
+        If you want to reactively jam the advertisements transmitted by a specific target, you can provide its BD address :
+        $ btlejack --jam_adv=11:22:33:44:55:66
+
+        If you want to jam a specific pattern, use the syntax <pattern>:<position>. For example, if you want to jam the frames 
+        containing aabbcc at the third position, use the following request :
+        $ btlejack --jam_adv=aabbcc:3
+
+        Please note that this feature is still experimental. If you want to stop the reactive jamming, you need to reset the 
+        device using the physical button (TODO : bugfix). 
+        """
+        pattern = args.jam_advertisements
+        if re.match("^([a-fA-F0-9][a-fA-F0-9]:){5}[a-fA-F0-9][a-fA-F0-9]$",pattern):
+            # If the argument provided is an address, generate the corresponding pattern at position 2.
+            position = 2
+            pattern = bytes.fromhex(pattern.replace(":",""))[::-1]
+        elif re.match("^[a-fA-F0-9]*:[0-9]+$",pattern):
+            # If the argument provided is a pattern, use it directly.
+            position = int(pattern.split(":")[1])
+            pattern = bytes.fromhex(pattern.split(":")[0])
+        else:
+            print("[!] Incorrect pattern, exiting ...")
+            sys.exit(-3)
+
+        try:
+            # Instanciate the supervisor
+            supervisor = CLIAdvertisementsJammer(verbose=args.verbose, devices=args.devices,output=output,channel=args.channel,pattern=pattern,position=position)
+        except DeviceError as error:
+            print('[!] Please connect a compatible Micro:Bit in order to use BtleJack')
+            sys.exit(-1)  
+
     elif not args.flush and not args.install:
         print('BtleJack version %s' % VERSION)
         print('')

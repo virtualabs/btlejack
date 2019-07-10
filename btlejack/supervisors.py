@@ -68,6 +68,91 @@ class Supervisor(object):
         print('D:'+str(packet))
 
 
+class AdvertisementsJammer(Supervisor):
+    """
+    Advertisements jammer supervisor.
+
+    This supervisor allow to configure the sniffer as a reactive jammer for jamming advertisements, according to
+     the provided pattern. 
+    """
+    def __init__(self, devices=None, baudrate=115200,channel=37,pattern=b"",position=0):
+        super().__init__()
+        self.channel = channel
+        self.pattern = pattern
+        self.position = position
+
+        if devices is not None:
+            self.interface = MultiSnifferInterface(len(devices), baudrate, devices)
+        else:
+            self.interface = MultiSnifferInterface(3)
+
+        self.interface.enable_advertisements_reactive_jamming(self.channel,self.pattern,self.position)
+
+    def on_adv_jammed(self):
+        """
+        This method is called when an advertisement is jammed.
+        """
+        pass
+
+    def on_packet_received(self, packet):
+        """
+        Dispatch received packets.
+        """
+        if isinstance(packet,VerbosePacket) and packet.data == b"ADV_JAMMED":
+            self.on_adv_jammed()
+        elif isinstance(packet, VerbosePacket) or isinstance(packet, DebugPacket):
+            super().on_packet_received(packet)
+
+class AdvertisementsSniffer(Supervisor):
+    """
+    Advertisements sniffer supervisor.
+
+    This supervisor allow to configure the sniffer as a sniffer for advertisements, according to
+     the provided policy. 
+    """
+    STATE_IDLE = 0
+    STATE_SNIFFING = 1
+
+    def __init__(self, devices=None, baudrate=115200,channel=37,policy={"policy_type":"blacklist","rules":[]},accept_invalid_crc=False):
+        super().__init__()
+        self.channel = channel
+        self.policy = policy
+        self.accept_invalid_crc = accept_invalid_crc
+        self.state = self.STATE_IDLE
+
+        # Configure the devices.
+        if devices is not None:
+            self.interface = MultiSnifferInterface(len(devices), baudrate, devices)
+        else:
+            self.interface = MultiSnifferInterface(3)
+
+        # Configure the filtering policy.
+        self.interface.reset_filtering_policy(self.policy["policy_type"])
+        for rule in self.policy["rules"]:
+            self.interface.add_rule(rule["pattern"],rule["mask"],rule["position"])
+
+	# Enable advertisement sniffing.
+        if self.interface.enable_advertisements_sniffing(self.channel):
+                self.state = self.STATE_SNIFFING
+
+    def on_advertisements_response(self, packet):
+        pass
+
+    def on_packet_received(self, packet):
+        """
+        Dispatch received packets.
+        """
+        if isinstance(packet, VerbosePacket) or isinstance(packet, DebugPacket):
+            super().on_packet_received(packet)
+        else:
+            if isinstance(packet, AdvertisementsResponse):
+                self.on_advertisements_response(packet)
+            elif isinstance(packet,AdvertisementsPacketNotification):
+                if self.state == self.STATE_SNIFFING:
+                    # Checks if the CRC is valid or if the accept_invalid_crc option is set
+                    if packet.crc_ok == 0x01 or (packet.crc_ok == 0x00 and self.accept_invalid_crc):
+                        self.on_adv_packet(packet)
+
 class AccessAddressSniffer(Supervisor):
     """
     Access address sniffer.

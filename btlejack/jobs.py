@@ -116,6 +116,61 @@ class SingleSnifferInterface(AbstractInterface):
             packets.append(packet)
         return packets
 
+    def enable_advertisements_reactive_jamming(self,channel,pattern,position):
+        """
+        Enable Advertisements jamming (synchronous).
+
+        Sends a command switching link into Advertisements reactive Jamming mode.
+        """
+        self.link.write(EnableReactiveJammingCommand(channel=channel,pattern=pattern,position=position))
+        self.link.wait_packet(AdvertisementsResponse)
+        super().jam_advertisements()
+        return True
+
+    def disable_advertisements_reactive_jamming(self):
+        """
+        Disable Advertisements jamming.
+
+        Sends a command disabling Advertisements reactive jamming mode.
+        """
+        self.link.write(DisableReactiveJammingCommand())
+
+    def enable_advertisements_sniffing(self,channel):
+        """
+        Enable Advertisements sniffing (synchronous).
+
+        Sends a command switching link into Advertisements sniffing mode.
+        """
+        self.link.write(EnableAdvertisementsSniffingCommand(channel))
+        pkt = self.link.wait_packet(AdvertisementsResponse)
+        super().sniff_advertisements()
+        return (pkt.response_type == 0x03 and pkt.status == 0)
+
+    def reset_filtering_policy(self,policy_type="blacklist"):
+        """
+        Reset filtering policy.
+
+        Sends a command reseting the filtering policy to the provided filtering mode ("whitelist" or "blacklist").
+        """
+        self.link.write(ResetFilteringPolicyCommand(policy_type))
+
+    def add_rule(self,pattern,mask,position=None):
+        """
+        Add filtering Rule.
+
+        Sends a command adding a new rule to the filtering policy.
+        """
+        self.link.write(AddRuleCommand(pattern,mask,position))
+
+        
+    def disable_advertisements_sniffing(self):
+        """
+        Disable Advertisements sniffing (synchronous).
+
+        Sends a command disabling Advertisements sniffing mode.
+        """
+        self.link.write(DisableAdvertisementsSniffingCommand())
+
 class MultiSnifferInterface(AbstractInterface):
     """
     Multi-sniffer interface class.
@@ -208,6 +263,7 @@ class MultiSnifferInterface(AbstractInterface):
             link.reset()
 
     def enable_jamming(self, enabled=False):
+        
         if self.active_link is not None:
             self.active_link.enable_jamming(enabled)
 
@@ -290,12 +346,85 @@ class MultiSnifferInterface(AbstractInterface):
             link.recover_chm(access_address, crcinit, ranges[i][0], ranges[i][1], timeout)
         super().recover_chm()
 
+
+    def enable_advertisements_sniffing(self,channel):
+        """
+        Enable Advertisements sniffing.
+
+        Sends a command switching links into Advertisements sniffing mode.
+        """
+        if channel == 37:
+            channels = [37,38,39]
+        elif channel == 38:
+            channels = [38,39,37]
+        else:
+            channels = [39,37,38]
+        super().sniff_advertisements()
+        for i,link in enumerate(self.interfaces):
+            link.enable_advertisements_sniffing(channels[i])
+        return True
+
+    def enable_advertisements_reactive_jamming(self,channel,pattern,position):
+        """
+        Enable Advertisements reactive jamming.
+
+        Sends a command switching links into Advertisements reactive jamming mode.
+        """
+        if channel == 37:
+            channels = [37,38,39]
+        elif channel == 38:
+            channels = [38,39,37]
+        else:
+            channels = [39,37,38]
+        super().jam_advertisements()
+        for i,link in enumerate(self.interfaces):
+            link.enable_advertisements_reactive_jamming(channels[i],pattern,position)
+        return True
+
+    def disable_advertisements_reactive_jamming(self):
+        """
+        Disable Advertisements reactive jamming.
+
+        Sends a command disabling Advertisements reactive jamming mode.
+        """
+        for i,link in enumerate(self.interfaces):
+            link.disable_advertisements_reactive_jamming()
+
+    def reset_filtering_policy(self,policy_type="blacklist"):
+        """
+        Reset filtering policy.
+
+        Sends a command resetting the filtering policies of the connected devices.
+        """
+        for i,link in enumerate(self.interfaces):
+            link.reset_filtering_policy(policy_type)
+
+    def add_rule(self,pattern,mask,position=None):
+        """
+        Add filtering Rule.
+
+        Sends a command adding a specific rule to the filtering policies of the connected device.
+        """
+        for i,link in enumerate(self.interfaces):
+            link.add_rule(pattern,mask,position)
+        
+    def disable_advertisements_sniffing(self):
+        """
+        Disable Advertisements sniffing (synchronous).
+
+        Sends a command disabling Advertisements sniffing mode.
+        """
+        for i,link in enumerate(self.interfaces):
+            link.disable_advertisements_sniffing()
+
     def read_packet(self):
         """
         Read packet(s) if one is ready (asynchroous)
         """
         packets = []
-        if (self.mode == self.MODE_RECOVER_CHM):
+        if (self.mode == self.MODE_RECOVER_CHM or 
+            self.mode == self.MODE_ADVERTISEMENTS_SNIFFING or 
+            self.mode == self.MODE_ADVERTISEMENTS_JAMMING):
             for link in self.interfaces:
                 if not link.is_idling():
                     pkts = link.read_packet()
