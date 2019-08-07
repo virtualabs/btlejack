@@ -59,6 +59,15 @@ def main():
     )
 
     parser.add_argument(
+        '-5',
+        '--ble5',
+        dest='v5',
+        action='store_true',
+        default=False,
+        help='Force BLE v5 mode'
+    )
+
+    parser.add_argument(
         '-s',
         '--scan-connections',
         dest='scan_aa',
@@ -270,6 +279,7 @@ def main():
                 print('[i] Using cached parameters (created on %s)' % creation_date)
 
             try:
+                #print('ble v5: %s' % args.v5)
                 supervisor = CLIConnectionRecovery(
                     aa,
                     channel_map=chm,
@@ -280,7 +290,8 @@ def main():
                     output=output,
                     verbose=args.verbose,
                     devices=args.devices,
-                    timeout=args.timeout
+                    timeout=args.timeout,
+                    v5=args.v5
                 )
             except SnifferUpgradeRequired as su:
                 print("[i] Quitting, please upgrade your sniffer firmware (-i option if you are using a Micro:Bit)")

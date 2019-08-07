@@ -17,7 +17,7 @@ class SingleSnifferInterface(AbstractInterface):
     This class communicates with a single sniffer plugged into the computer.
     """
 
-    def __init__(self, device=None, baudrate=115200):
+    def __init__(self, device=None, baudrate=115200, v5=False):
         """
         Constructor.
         """
@@ -27,6 +27,8 @@ class SingleSnifferInterface(AbstractInterface):
         # reset and request version.
         self.link.reset()
         self.version = self.link.get_version()
+        self.v5 = v5
+        #print('ssi:v5:%s' % self.v5)
 
     def get_version(self):
         """
@@ -82,7 +84,10 @@ class SingleSnifferInterface(AbstractInterface):
         @param access_address   int     target access address
         @param crcinit          int     CRCInit value
         """
-        self.link.write(RecoverChmCommand(access_address, crcinit, start, stop, timeout))
+        if self.v5:
+            self.link.write(RecoverBle5ChmCommand(access_address, crcinit, start, stop, timeout))
+        else:
+            self.link.write(RecoverChmCommand(access_address, crcinit, start, stop, timeout))
         self.link.wait_packet(RecoverResponse)
         super().recover_chm()
 
@@ -97,6 +102,19 @@ class SingleSnifferInterface(AbstractInterface):
         self.link.write(RecoverHopCommand(access_address, crcinit, chm))
         self.link.wait_packet(RecoverResponse)
         super().recover_hop()
+
+    def recover_prng(self, access_address, crcinit, chm, hop_interval):
+        """
+        Recover BLE5 internal counter value.
+
+        @param access_address   int     target access address
+        @param crcinit          int     CRCInit value
+        @param chm              int     Channel map
+        @param hop_interval     int     hop interval
+        """
+        self.link.write(RecoverBle5Prng(access_address, crcinit, chm, hop_interval))
+        self.link.wait_packet(RecoverResponse)
+        super().recover_prng()
 
     def sniff_connection(self, bd_address, channel=37):
         """
@@ -124,7 +142,7 @@ class MultiSnifferInterface(AbstractInterface):
     the corresponding resources.
     """
 
-    def __init__(self, max_number_sniffers=1, baudrate=115200, devices=None):
+    def __init__(self, max_number_sniffers=1, baudrate=115200, devices=None, v5=False):
         super().__init__(None)
         self.interfaces = []
 
@@ -141,7 +159,9 @@ class MultiSnifferInterface(AbstractInterface):
             for device in devices:
                 self.devices.append(device)
 
+        #print('new sniffer, reset active link')
         self.active_link = None
+        self.v5 = v5
         self.connect(max_number_sniffers, baudrate)
         self.reset()
 
@@ -161,6 +181,7 @@ class MultiSnifferInterface(AbstractInterface):
                 SingleSnifferInterface(
                     self.devices[index],
                     baudrate,
+                    self.v5
                 )
             )
 
@@ -210,6 +231,8 @@ class MultiSnifferInterface(AbstractInterface):
     def enable_jamming(self, enabled=False):
         if self.active_link is not None:
             self.active_link.enable_jamming(enabled)
+        else:
+            print('[!] No active link')
 
     def enable_hijacking(self, enabled=False):
         if self.active_link is not None:
@@ -266,9 +289,20 @@ class MultiSnifferInterface(AbstractInterface):
             link.recover_hop(access_address, crcinit, chm)
         super().recover_hop()
 
-    def recover_chm(self, access_address, crcinit, timeout=0):
+    def recover_prng(self, access_address, crcinit, chm, hop_interval):
+        """
+        Recover BLE5 internal PRNG counter.
+        """
+        self.reset()
+        link = self.get_free_interface()
+        link.set_timeout(0.1)
+        if link is not None:
+            link.recover_prng(access_address, crcinit, chm, hop_interval)
+
+    def recover_chm(self, access_address, crcinit, timeout=0, v5=False):
         # compute how many devices we have
         nb_devices = len(self.interfaces)
+        #print('recover chm: reset active link')
         self.active_link = None
 
         # create mapping ranges

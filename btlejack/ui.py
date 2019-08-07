@@ -105,7 +105,7 @@ class PromptThread(Thread):
                 value = pack('<I', int(parameters[2]))
             elif write_type.lower() == 'str':
                 value = bytes(parameters[2], 'utf-8')
-                print(value)
+                #print(value)
             elif write_type.lower() == 'hex':
                 try:
                   value = bytes(bytearray.fromhex(parameters[2]))
@@ -446,7 +446,7 @@ class CLIConnectionRecovery(ConnectionRecovery):
     CLI Connection recovery class.
     """
 
-    def __init__(self, access_address, channel_map=None, crc=None, hop_interval=None, devices=None, baudrate=115200, hijack=False, jamming=False, output=None, debug=False, verbose=False, timeout=0):
+    def __init__(self, access_address, channel_map=None, crc=None, hop_interval=None, devices=None, baudrate=115200, hijack=False, jamming=False, output=None, debug=False, verbose=False, timeout=0, v5=False):
         super().__init__(
             access_address,
             channel_map=channel_map,
@@ -454,7 +454,8 @@ class CLIConnectionRecovery(ConnectionRecovery):
             hop_interval=hop_interval,
             devices=devices,
             baudrate=baudrate,
-            timeout=timeout
+            timeout=timeout,
+            v5=v5
         )
         self.output = output
         self.debug = debug
@@ -463,6 +464,7 @@ class CLIConnectionRecovery(ConnectionRecovery):
         self._jamming = jamming
         self._hijack = hijack
         self._pt = None
+        self.v5 = v5
 
         # Display sniffers version
         major,minor = [int(v) for v in VERSION.split('.')]
@@ -482,7 +484,14 @@ class CLIConnectionRecovery(ConnectionRecovery):
         elif channel_map is not None:
             print('✓ CRCInit: 0x%006x' % crc)
             print('✓ Channel map is provided: 0x%010x' % self.chm)
-            self.spinner = Halo(text='Computing hop interval', spinner='line')
+            if self.v5 and hop_interval:
+                # if csa2 is selected and chm and hop_interval provided, then solve prng
+                print('✓ Hop interval is provided: %d' % self.hop_interval)
+                self.spinner = Halo('Recovering PRNG internal counter', spinner='line')
+                #self.spinner.start()
+                #self.interface.recover_prng(self.access_address, self.crc, self.chm, self.hop_interval)
+            else:
+                self.spinner = Halo(text='Computing hop interval', spinner='line')
         else:
             print('✓ CRCInit: 0x%006x' % crc)
             self.spinner = Halo(text='Determining channel map', spinner='line')
@@ -513,9 +522,14 @@ class CLIConnectionRecovery(ConnectionRecovery):
         )
         if self.chm_provided:
             print('✓ Channel map is provided: 0x%010x' % self.chm)
-            self.spinner.text = 'Computing hop interval'
-            self.spinner.start()
-            self.interface.recover_hop(self.access_address, self.crc, self.chm)
+            #print(self.v5)
+            if self.v5:
+                # Skip hop cchm ...
+                self.on_chm(self.chm)
+            else:
+                self.spinner.text = 'Computing hop interval'
+                self.spinner.start()
+                self.interface.recover_hop(self.access_address, self.crc, self.chm)
         else:
             self.spinner.text = 'Determining channel map'
             self.spinner.start()
@@ -534,9 +548,20 @@ class CLIConnectionRecovery(ConnectionRecovery):
             self.spinner.text = 'Computing hop increment'
             self.spinner.start()
         else:
-            self.spinner.text = 'Computing hop interval'
-            self.spinner.start()
-            self.interface.recover_hop(self.access_address, self.crc, self.chm)
+            # If version 5 is required, we don't need to ask the firmware
+            # to recover the hop interval.
+            #print(self.v5)
+            if not self.v5:
+                self.spinner.text = 'Computing hop interval'
+                self.spinner.start()
+                self.interface.recover_hop(self.access_address, self.crc, self.chm)
+            else:
+                self.spinner.text = 'Computing hop interval'
+                self.spinner.start()
+
+                #self.spinner.text = 'Recovering CSA2 PRNG state'
+                #self.spinner.start()
+                #self.interface.recover_prng(self.access_address, self.crc, self.chm, 160)
 
     def on_hopinterval(self, interval):
         """
@@ -546,8 +571,13 @@ class CLIConnectionRecovery(ConnectionRecovery):
             symbol='✓'.encode('utf-8'),
             text='Hop interval = %d'%interval
         )
-        self.spinner.text = 'Computing hop increment'
-        self.spinner.start()
+        if self.v5:
+            self.spinner.text = 'Recovering PRNG internal counter'
+            self.spinner.start()
+            self.interface.recover_prng(self.access_address, self.crc, self.chm, interval)
+        else:
+            self.spinner.text = 'Computing hop increment'
+            self.spinner.start()
 
     def on_hopincrement(self, increment):
         """
@@ -565,6 +595,24 @@ class CLIConnectionRecovery(ConnectionRecovery):
             self.jam()
         else:
             print('[i] Synchronized, packet capture in progress ...')
+
+    def on_prng_state(self, state):
+        """
+        CSA2 PRNG State has been recovered
+        """
+        self.spinner.stop_and_persist(
+            symbol='✓'.encode('utf-8'),
+            text='CSA2 PRNG counter = %d'%state
+        )
+        if self._hijack:
+            print('[i] Synchronized, hijacking in progress ...')
+            self.hijack()
+        elif self._jamming:
+            print('[i] Synchronized, jamming in progress ...')
+            self.jam()
+        else:
+            print('[i] Synchronized, packet capture in progress ...')
+
 
 
     def on_ll_packet(self, packet):
