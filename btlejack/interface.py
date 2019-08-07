@@ -18,6 +18,7 @@ class AbstractInterface(object):
     MODE_RECOVER_CRC = 5
     MODE_RECOVER_CHM = 6
     MODE_RECOVER_HOP = 7
+    MODE_RECOVER_PRNG = 8
 
     def __init__(self, link):
         """
@@ -99,6 +100,12 @@ class AbstractInterface(object):
         Switch the link in connection recovery mode.
         """
         self.mode = self.MODE_RECOVER
+
+    def recover_prng(self):
+        """
+        Switch the link in CSA2 PRNG recovery mode.
+        """
+        self.mode = self.MODE_RECOVER_PRNG
 
     def sniff_connection(self):
         """
