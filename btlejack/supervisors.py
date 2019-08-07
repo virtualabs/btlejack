@@ -148,8 +148,10 @@ class ConnectionRecovery(Supervisor):
     STATE_HIJACKING = 6
     STATE_HIJACKED = 7
     STATE_RECOVER_CCHM = 8
+    STATE_RECOVER_PRNG = 9
 
-    def __init__(self, access_address, channel_map=None, hop_interval=None, crc=None, devices=None, baudrate=115200, timeout=0):
+    def __init__(self, access_address, channel_map=None, hop_interval=None, crc=None, devices=None, baudrate=115200, timeout=0, v5=False):
+
         super().__init__()
 
         # Retrieve the user session
@@ -160,9 +162,9 @@ class ConnectionRecovery(Supervisor):
             self.session = None
 
         if devices is not None:
-            self.interface = MultiSnifferInterface(len(devices), baudrate, devices)
+            self.interface = MultiSnifferInterface(len(devices), baudrate, devices, v5=v5)
         else:
-            self.interface = MultiSnifferInterface(999)
+            self.interface = MultiSnifferInterface(999, v5=v5)
         self.state = self.STATE_RECOVER_CRC
         self.chm_provided = (channel_map is not None)
         self.crc_provide = (crc is not None)
@@ -175,6 +177,8 @@ class ConnectionRecovery(Supervisor):
         self.cchm_notifications = 0
         self.cchm = 0
         self.timeout = timeout
+        self.v5 = v5
+        #print('ble version 5: %s' % self.v5)
 
         # Launch recovery based on the provided informations.
         if self.crc is not None:
@@ -188,8 +192,12 @@ class ConnectionRecovery(Supervisor):
                 self.session.save()
 
             if self.chm is not None:
-                self.state = self.STATE_RECOVER_HOPINTER
-                self.interface.recover_hop(access_address, self.crc, self.chm)
+                if self.v5 and self.hop_interval is not None:
+                    self.state = self.STATE_RECOVER_PRNG
+                    self.interface.recover_prng(self.access_address, self.crc, self.chm, self.hop_interval)
+                else:
+                    self.state = self.STATE_RECOVER_HOPINTER
+                    self.interface.recover_hop(access_address, self.crc, self.chm)
             else:
                 self.state = self.STATE_RECOVER_CCHM
                 self.interface.recover_chm(access_address, self.crc, self.timeout)
@@ -202,6 +210,7 @@ class ConnectionRecovery(Supervisor):
         """
         Enable jamming.
         """
+        #print(self.state)
         if self.state == self.STATE_FOLLOWING:
             self.interface.enable_jamming(True)
 
@@ -218,6 +227,7 @@ class ConnectionRecovery(Supervisor):
         Packet handler.
         """
         #print(packet)
+        #print(self.state)
         if isinstance(packet, VerbosePacket) or isinstance(packet, DebugPacket):
             super().on_packet_received(packet)
         elif isinstance(packet, ConnectionLostNotification):
@@ -239,8 +249,10 @@ class ConnectionRecovery(Supervisor):
 
                     # If channel map is provided
                     if self.chm_provided:
-                        #self.on_chm(self.chm)
-                        self.state = self.STATE_RECOVER_HOPINTER
+                        if self.v5:
+                            self.state = self.STATE_RECOVER_PRNG
+                        else:
+                            self.state = self.STATE_RECOVER_HOPINTER
                     else:
                         # We are going to recover the channel map
                         # but in a collaborative way if we have
@@ -268,11 +280,19 @@ class ConnectionRecovery(Supervisor):
             elif self.state == self.STATE_RECOVER_CHM:
                 if isinstance(packet, ChannelMapNotification):
                     self.on_chm(packet.channel_map)
-
-                    if self.hop_provided:
-                        self.state = self.STATE_RECOVER_HOPINC
+                    if not self.v5:
+                        if self.hop_provided:
+                            self.state = self.STATE_RECOVER_HOPINC
+                        else:
+                            self.state = self.STATE_RECOVER_HOPINTER
                     else:
                         self.state = self.STATE_RECOVER_HOPINTER
+                        #self.state = self.STATE_RECOVER_PRNG
+            elif self.state == self.STATE_RECOVER_PRNG:
+                #print(packet)
+                if isinstance(packet, Csa2PrngNotification):
+                    self.state = self.STATE_FOLLOWING
+                    self.on_prng_state(packet.prng_state)
             elif self.state == self.STATE_RECOVER_CCHM:
                 if isinstance(packet, ChannelMapNotification):
                     # we expect to get as many chm notification as interfaces
@@ -285,7 +305,10 @@ class ConnectionRecovery(Supervisor):
                 if isinstance(packet, HopIntervalNotification):
                     # Save CHM too in session if possible
                     self.on_hopinterval(packet.interval)
-                    self.state = self.STATE_RECOVER_HOPINC
+                    if not self.v5:
+                        self.state = self.STATE_RECOVER_HOPINC
+                    else:
+                        self.state = self.STATE_RECOVER_PRNG
             elif self.state == self.STATE_RECOVER_HOPINC:
                 if isinstance(packet, HopIncrementNotification):
                     self.state = self.STATE_FOLLOWING
@@ -316,15 +339,20 @@ class ConnectionRecovery(Supervisor):
         """
         Channel map has been recovered.
         """
-        print('sup:on_chm')
-        print('CHM: %010x' % chm)
         self.state = self.STATE_RECOVER_HOPINTER
         self.chm = chm
-        self.recover_hop(
-            self.access_address,
-            self.crc,
-            self.chm
-        )
+        # If BLE v4.x, we need to recover the hop interval.
+        if not self.v5:
+            self.recover_hop(
+                self.access_address,
+                self.crc,
+                self.chm
+            )
+        else:
+            #print('--> recover prng')
+            self.state = self.STATE_RECOVER_PRNG
+        # Otherwise we only expect a hop interval notification
+
 
     def on_hopinterval(self, interval):
         """
@@ -337,6 +365,12 @@ class ConnectionRecovery(Supervisor):
         Hop increment has been recovered.
         """
         print('Increment: %d' % increment)
+
+    def on_prng_state(self, state):
+        """
+        CSA2 PRNG state recovered.
+        """
+        print('CSA2 PRNG state: %d' % state)
 
     def on_ll_packet(self, packet):
         """
@@ -413,6 +447,7 @@ class ConnectionSniffer(Supervisor):
         """
         Enable jamming.
         """
+        #print('enable jamming: %d' % self.state)
         if self.state == self.STATE_FOLLOWING:
             self.interface.enable_jamming(True)
 
