@@ -96,6 +96,7 @@ class Packet(object):
     N_PACKET_NORDIC = 0x07
     N_HIJACK_STATUS = 0x08
     N_CONN_LOST = 0x09
+    N_CSA2_PRNG = 0x0A
 
     def __init__(self, operation, data, flags):
         """
@@ -418,6 +419,49 @@ class RecoverChmCommand(Packet):
         )
         super().__init__(Packet.OP_RECOVER, params, Packet.F_CMD)
 
+class RecoverBle5ChmCommand(Packet):
+    """
+    Recover connection's channel map command.
+    """
+    def __init__(self, access_address, crcinit, start, stop, timeout=0):
+        params = pack('<BIBBBBBI',
+            3, # operation type is CHM recovery for BLE v5
+            access_address,
+            crcinit & 0xff,
+            (crcinit & 0xff00) >> 8,
+            (crcinit & 0xff0000) >> 16,
+            start,
+            stop,
+            timeout
+        )
+        super().__init__(Packet.OP_RECOVER, params, Packet.F_CMD)
+
+class RecoverBle5Prng(Packet):
+    """
+    Recover connection's channel map command.
+    """
+    def __init__(self, access_address, crcinit, chm, hop_interval):
+        chm = bytes([
+            chm&0xff,
+            (chm&0xff00) >> 8,
+            (chm&0xff0000) >> 16,
+            (chm&0xff000000) >> 24,
+            (chm&0xff00000000) >> 32,
+        ])
+
+        params = pack('<BIBBB',
+            4, # operation type is PRNG recovery for BLE5
+            access_address,
+            crcinit & 0xff,
+            (crcinit & 0xff00) >> 8,
+            (crcinit & 0xff0000) >> 16,
+        ) + chm + pack('<BB',
+            hop_interval&0xff,
+            (hop_interval&0xff00)>>8
+        )
+        super().__init__(Packet.OP_RECOVER, params, Packet.F_CMD)
+
+
 class RecoverHopCommand(Packet):
     """
     Recover connection's hopping parameters (interval and increment).
@@ -659,6 +703,20 @@ class HopIncrementNotification(Packet):
     def from_raw(packet):
         access_address, increment = unpack('<IB', packet.data[:6])
         return HopIncrementNotification(access_address, increment)
+
+@register_packet(Packet.N_CSA2_PRNG, Packet.F_NOTIFICATION)
+class Csa2PrngNotification(Packet):
+    def __init__(self, access_address, prng_state):
+        self.access_address = access_address
+        self.prng_state = prng_state
+        payload = pack('<II', access_address, prng_state)
+        super().__init__(Packet.N_CSA2_PRNG, payload, Packet.F_NOTIFICATION)
+
+    @staticmethod
+    def from_raw(packet):
+        access_address, prng_state = unpack('<II', packet.data[:8])
+        return Csa2PrngNotification(access_address, prng_state)
+
 
 @register_packet(Packet.N_PACKET, Packet.F_NOTIFICATION)
 class BlePacketNotification(Packet):
