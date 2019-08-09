@@ -268,39 +268,44 @@ class PromptThread(Thread):
         """
         Display packet.
         """
-        if self.discovering_services:
-            # Parse primary services tuples
-            response = L2CAP.from_bytes(packet.data[12:]).payload.payload
-            if isinstance(response, ErrorResponse):
-                self._services_discovered()
-            elif isinstance(response, ReadByGroupTypeResponse):
-                self._services_discover_next(response)
+        try:
+            if self.discovering_services:
+                # Parse primary services tuples
+                response = L2CAP.from_bytes(packet.data[12:]).payload.payload
+                if isinstance(response, ErrorResponse):
+                    self._services_discovered()
+                elif isinstance(response, ReadByGroupTypeResponse):
+                    self._services_discover_next(response)
+                else:
+                    self._services_discover_error()
+            elif self.discovering_characs:
+                # Parse answer
+                response = L2CAP.from_bytes(packet.data[12:]).payload.payload
+                if isinstance(response, ErrorResponse):
+                    self._services_charac_next(response)
+                elif isinstance(response, ReadByTypeResponse):
+                    self._services_charac_discovered(response)
+                else:
+                    #self._services_charac_discover_error()
+                    print(response.payload.payload)
+            elif self.reading:
+                response = L2CAP.from_bytes(packet.data[12:]).payload.payload
+                if isinstance(response, ErrorResponse):
+                    self.reading = False
+                    sys.stdout.write('\r>> Error while reading\nbtlejack> ')
+                elif isinstance(response, ReadResponse):
+                    self.reading = False
+                    value = response.value
+                    value_hex = ' '.join(['%02x' % c for c in value])
+                    sys.stdout.write('\rread>> %s\nbtlejack> ' % value_hex)
             else:
-                self._services_discover_error()
-        elif self.discovering_characs:
-            # Parse answer
-            response = L2CAP.from_bytes(packet.data[12:]).payload.payload
-            if isinstance(response, ErrorResponse):
-                self._services_charac_next(response)
-            elif isinstance(response, ReadByTypeResponse):
-                self._services_charac_discovered(response)
-            else:
-                #self._services_charac_discover_error()
-                print(response.payload.payload)
-        elif self.reading:
-            response = L2CAP.from_bytes(packet.data[12:]).payload.payload
-            if isinstance(response, ErrorResponse):
-                self.reading = False
-                sys.stdout.write('\r>> Error while reading\nbtlejack> ')
-            elif isinstance(response, ReadResponse):
-                self.reading = False
-                value = response.value
-                value_hex = ' '.join(['%02x' % c for c in value])
-                sys.stdout.write('\rread>> %s\nbtlejack> ' % value_hex)
-        else:
-            pkt = packet.data[10:]
-            pkt_hex = ' '.join(['%02x' % c for c in pkt])
-            sys.stdout.write('\r>> %s\nbtlejack> '%pkt_hex)
+                pkt = packet.data[10:]
+                pkt_hex = ' '.join(['%02x' % c for c in pkt])
+                sys.stdout.write('\r>> %s\nbtlejack> '%pkt_hex)
+        except L2CAPException as l2cap_error:
+            # We got here because we caught something that is not L2CAP, that means
+            # the connection is encrypted, so we have to notice the user in consequence
+            sys.stdout.write('\r[!] Bad L2CAP packet received, connection must be encrypted.')
 
     def dispatch_command(self, command):
         words = command.split(' ')
