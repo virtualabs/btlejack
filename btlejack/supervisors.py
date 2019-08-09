@@ -165,6 +165,7 @@ class ConnectionRecovery(Supervisor):
             self.interface = MultiSnifferInterface(len(devices), baudrate, devices, v5=v5)
         else:
             self.interface = MultiSnifferInterface(999, v5=v5)
+
         self.state = self.STATE_RECOVER_CRC
         self.chm_provided = (channel_map is not None)
         self.crc_provide = (crc is not None)

@@ -8,7 +8,7 @@ from serial.tools.list_ports import comports
 
 from btlejack.packets import *
 from btlejack.interface import AbstractInterface
-from btlejack.link import Link
+from btlejack.link import Link, DeviceError
 
 class SingleSnifferInterface(AbstractInterface):
     """
@@ -158,6 +158,10 @@ class MultiSnifferInterface(AbstractInterface):
         else:
             for device in devices:
                 self.devices.append(device)
+
+        # Cannot continue if no device is connected :/
+        if len(self.devices) == 0:
+            raise DeviceError("No compatible device found")
 
         #print('new sniffer, reset active link')
         self.active_link = None
