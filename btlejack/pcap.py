@@ -4,8 +4,14 @@ Quick'n'dirty Pcap module
 This module only provides a specific class able to write
 PCAP files with Bluetooth Low Energy Link Layer.
 """
+import os
 from io import BytesIO
 from struct import pack
+
+class FifoError(Exception):
+    def __init__(self):
+        super().__init__()
+
 
 class PcapBleWriter(object):
     """
@@ -14,15 +20,35 @@ class PcapBleWriter(object):
 
     DLT =  251  # DLT_BLUETOOTH_LE_LL
 
-    def __init__(self, output=None):
+    def __init__(self, output=None, fifo=None):
         # open stream
         if output is None:
             self.output = BytesIO()
         else:
             self.output = open(output,'wb')
 
+        # open fifo if required
+        if fifo is None:
+            self.fifo = None
+        else:
+            try:
+                # check if fifo already exists
+                if not os.path.exists(fifo):
+                    os.mkfifo(fifo)
+                print('[i] Waiting for wireshark ...')
+                self.fifo = open(fifo, 'wb')
+            except IOError as fifo_err:
+                raise FifoError()
+
         # write headers
         self.write_header()
+
+    def write_fifo(self, data):
+        """
+        Write data to fifo, if a fifo has been specified.
+        """
+        if self.fifo is not None:
+            self.fifo.write(data)
 
     def write_header(self):
         """
@@ -39,6 +65,7 @@ class PcapBleWriter(object):
             self.DLT
         )
         self.output.write(header)
+        self.write_fifo(header)
 
     def write_packet_header(self, ts_sec, ts_usec, packet_size):
         """
@@ -52,6 +79,7 @@ class PcapBleWriter(object):
             packet_size
         )
         self.output.write(pkt_header)
+        self.write_fifo(pkt_header)
 
     def payload(self, aa, packet):
         """
@@ -70,6 +98,8 @@ class PcapBleWriter(object):
         payload = self.payload(aa, packet)
         self.write_packet_header(ts_sec, ts_usec, len(payload))
         self.output.write(payload)
+        self.write_fifo(payload)
+        self.fifo.flush()
 
     def close(self):
         """
@@ -77,6 +107,8 @@ class PcapBleWriter(object):
         """
         if not isinstance(self.output, BytesIO):
             self.output.close()
+        if self.fifo is not None:
+            self.fifo.close()
 
 class PcapBlePHDRWriter(PcapBleWriter):
     """
@@ -84,8 +116,8 @@ class PcapBlePHDRWriter(PcapBleWriter):
     """
     DLT = 256 # DLT_BLUETOOTH_LE_LL_WITH_PHDR
 
-    def __init__(self, output=None):
-        super().__init__(output=output)
+    def __init__(self, output=None, fifo=None):
+        super().__init__(output=output, fifo=fifo)
 
     def payload(self, aa, packet):
         """
@@ -112,8 +144,8 @@ class PcapNordicTapWriter(PcapBleWriter):
     DLT = 272 # DLT_NORDIC_BLE
     BTLEJACK_ID = 0xDC
 
-    def __init__(self, output=None):
-        super().__init__(output=output)
+    def __init__(self, output=None, fifo=None):
+        super().__init__(output=output, fifo=fifo)
         self.pkt_counter = 0
 
     def payload(self, aa, packet):

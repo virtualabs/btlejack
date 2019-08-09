@@ -124,7 +124,15 @@ def main():
         '--output',
         dest='output',
         default=None,
-        help='PCAP output file'
+        help='Output file'
+    )
+
+    parser.add_argument(
+        '-w',
+        '--wireshark-fifo',
+        dest='output_fifo',
+        default=None,
+        help='Fifo path (for wireshark)'
     )
 
     parser.add_argument(
@@ -234,19 +242,20 @@ def main():
             print('[!] Cannot load connections cache')
 
     # Create output if required
-    if args.output is not None:
+    if args.output is not None or args.output_fifo is not None:
         if args.output_format.lower() not in ['ll_phdr', 'nordic', 'pcap']:
             print('[!] Unknown specified output format (%s). Supported formats are: ll_phdr, nordic, pcap' % args.output_format)
             sys.exit(-1)
         if args.output_format.lower().strip() == 'nordic':
-            output = PcapNordicTapWriter(args.output)
+            output = PcapNordicTapWriter(args.output, args.output_fifo)
         elif args.output_format.lower().strip() == 'll_phdr':
-            output = PcapBlePHDRWriter(args.output)
+            output = PcapBlePHDRWriter(args.output, args.output_fifo)
         else:
             print('[i] No output format supplied, pcap format will be used')
-            output = PcapBleWriter(args.output)
+            output = PcapBleWriter(args.output, args.output_fifo)
     else:
         output = None
+
 
     if args.scan_aa:
         try:
@@ -345,3 +354,5 @@ def main():
                 supervisor.process_packets()
     except ForcedTermination as e:
         print('[i] Quitting')
+    except IOError as io_error:
+        print('[!] File access/write error occured, quitting.')
