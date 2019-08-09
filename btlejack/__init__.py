@@ -235,11 +235,15 @@ def main():
 
     # Create output if required
     if args.output is not None:
+        if args.output_format.lower() not in ['ll_phdr', 'nordic', 'pcap']:
+            print('[!] Unknown specified output format (%s). Supported formats are: ll_phdr, nordic, pcap' % args.output_format)
+            sys.exit(-1)
         if args.output_format.lower().strip() == 'nordic':
             output = PcapNordicTapWriter(args.output)
         elif args.output_format.lower().strip() == 'll_phdr':
             output = PcapBlePHDRWriter(args.output)
         else:
+            print('[i] No output format supplied, pcap format will be used')
             output = PcapBleWriter(args.output)
     else:
         output = None
@@ -316,11 +320,12 @@ def main():
                 )
             except SnifferUpgradeRequired as su:
                 print("[i] Quitting, please upgrade your sniffer firmware (-i option if you are using a Micro:Bit)")
+            except DeviceError as error:
+                print('[!] Please connect a compatible Micro:Bit in order to use BtleJack')
+                sys.exit(-1)
         else:
             print('[!] Wrong Bluetooth Address format: %s' % args.connreq)
     elif not args.flush and not args.install:
-        print('BtleJack version %s' % VERSION)
-        print('')
         parser.print_help()
         sys.exit(-2)
 
