@@ -4,7 +4,8 @@ BtleJack: a new Bluetooth Low Energy swiss-army knife
 Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Energy devices. It relies on one or more `BBC Micro:Bit <http://microbit.org/>`_. devices running a dedicated firmware. You may also
 want to use an `Adafruit's Bluefruit LE sniffer <https://www.adafruit.com/product/2269>`_ or a `nRF51822 Eval Kit <https://www.waveshare.com/wiki/BLE400>`_, as we added support for these devices.
 
-**This tool only supports Bluetooth Low Energy 4.x.**
+Current version of this tool (2.0) supports BLE 4.x and 5.x. The BLE 5.x support is limited, as it does only support the 1Mbps Uncoded PHY and does not support channel map updates.
+
 
 Requirements
 ============
@@ -378,8 +379,7 @@ Hijacking an existing BLE 5 connection
 --------------------------------------
 
 I did not manage to hijack a BLE 5 connection at this time, as this attack is
-time-sensitive. My BLE 5 devices use a latency of 0, allowing no delay in this
-attack.
+time-sensitive. My BLE 5 devices use a latency of 0, thus allowing no delay and
+causing this attack to fail.
 
-When I will get my hands on some legitimate BLE 5 devices, I will improve this
-attack.
+When I will get my hands on some legitimate BLE 5 devices, I will improve this.
