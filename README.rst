@@ -313,6 +313,9 @@ You can even use a FIFO and an output file as the same time:
 
   $ btlejack -c any -w /tmp/blepipe -o blepackets.pcap
 
+Hint for using btlejack on a Raspberry Pi
+-----------------------------------------
+If you have previously enabled **virtual ethernet over USB** (RNDIS), e.g. to setup a Raspberry Pi Zero W over USB, you need to disable this again (i.e. remove ``dtoverlay=dwc2`` from boot/config.txt and ``modules-load=dwc2,g_ether`` from boot/cmdline.txt, then ``sudo reboot``), because this would otherwise interfere with the sniffers' USB connections.
 
 Bluetooth LE 5 & 5.1 support
 ============================

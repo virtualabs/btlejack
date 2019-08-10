@@ -248,6 +248,8 @@ class MultiSnifferInterface(AbstractInterface):
         """
         Sniff a specific bd address on multiple channels.
         """
+
+        self.active_link = None
         channels = [37, 38, 39]
 
         # initialize jobs
