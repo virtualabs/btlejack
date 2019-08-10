@@ -296,6 +296,22 @@ This cache can be flushed with the ``-z`` option:
 
   $ btlejack -z
 
+Dumping live packets with Wireshark
+-----------------------------------
+
+Btlejack 2.0 introduces a new *-w* option that allows you to specify a FIFO path (existing or not) in order
+to perform packets live analysis:
+
+::
+
+  $ btlejack -c any -w /tmp/blepipe
+
+You can even use a FIFO and an output file as the same time:
+
+::
+
+  $ btlejack -c any -w /tmp/blepipe -o blepackets.pcap
+
 
 Bluetooth LE 5 & 5.1 support
 ============================
