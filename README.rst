@@ -295,3 +295,75 @@ This cache can be flushed with the ``-z`` option:
 ::
 
   $ btlejack -z
+
+
+Bluetooth LE 5 & 5.1 support
+============================
+
+This version supports Bluetooth Low Energy versions 5 and 5.1 and especially the new *channel selectrion algorithm* introduced
+in version 5 (CSA #2). However, since the hardware used does not support the two new PHYs added from version 5, it will only be
+able to sniff, jam, and maybe hijack connections using the **1Mbps uncoded PHY**.
+
+Please also note that the current implementation of CSA #2 included in Btlejack does not support channel map updates, for the moment.
+
+Sniffing a new BLE 5 connection
+-------------------------------
+
+Btlejack automatically detects the channel selection algorithm used, so you don't have to worry and just capture packets as usual.
+
+Sniffing an existing BLE 5 connection
+-------------------------------------
+
+Sniffing an existing BLE 5 connection (that uses the 1Mbps uncoded PHY, and only this PHY) is not so difficult. First, you must specify
+that you want to target a BLE 5 connection, by using the *-5* option. Please note that there is no way to tell if an existing connection
+uses CSA #2 or CSA #1, so you have to try both techniques until one works.
+
+::
+
+  $ btlejack -f 0x11223344 -5
+
+Btlejack will then recover the channel map used and then the hop interval value:
+
+::
+
+  $ btlejack -f 0x11223344 -5
+  [i] Synchronizing with connection 0x11223344 ...
+  ✓ CRCInit: 0x40d64f
+  ✓ Channel Map = 0x1fffffffff
+  ✓ Hop interval = 160
+
+It will then try to recover this connection PRNG counter value:
+
+::
+
+  $ btlejack -f 0x11223344 -5
+  [i] Synchronizing with connection 0x11223344 ...
+  ✓ CRCInit: 0x40d64f
+  ✓ Channel Map = 0x1fffffffff
+  ✓ Hop interval = 160
+  ✓ CSA2 PRNG counter = 5137
+  [i] Synchronized, packet capture in progress ...
+
+Once done, Btlejack is synchronized with this connection and will process packets
+as usual.
+
+Jamming an existing BLE 5 connection
+-------------------------------------
+
+Nothing new here, except that you must specify that you are attacking a BLE 5 connection,
+by using the *-5* option.
+
+Please note that you can optimize this attack by also specifying the channel map
+and hop interval value to use, by using respectively the *-m* and *-p* flags. Both
+of them MUST be provided, unless it would not work.
+
+
+Hijacking an existing BLE 5 connection
+--------------------------------------
+
+I did not manage to hijack a BLE 5 connection at this time, as this attack is
+time-sensitive. My BLE 5 devices use a latency of 0, allowing no delay in this
+attack.
+
+When I will get my hands on some legitimate BLE 5 devices, I will improve this
+attack.

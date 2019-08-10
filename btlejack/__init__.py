@@ -18,7 +18,8 @@ import re
 from subprocess import check_output
 from argparse import ArgumentParser
 
-from btlejack.pcap import PcapBleWriter, PcapNordicTapWriter,  PcapBlePHDRWriter
+from btlejack.pcap import (PcapBleWriter, PcapNordicTapWriter,
+                           PcapBlePHDRWriter, FifoError)
 from btlejack.ui import (CLIAccessAddressSniffer, CLIConnectionRecovery,
                          CLIConnectionSniffer, ForcedTermination,
                          SnifferUpgradeRequired)
@@ -356,3 +357,5 @@ def main():
         print('[i] Quitting')
     except IOError as io_error:
         print('[!] File access/write error occured, quitting.')
+    except FifoError as fifo_err:
+        print('[!] An error occured while accessing fifo.')
