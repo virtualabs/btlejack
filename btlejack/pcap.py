@@ -50,6 +50,13 @@ class PcapBleWriter(object):
         if self.fifo is not None:
             self.fifo.write(data)
 
+    def flush_fifo(self):
+        """
+        Flush fifo if a fifo has been specified.
+        """
+        if self.fifo is not None:
+            self.fifo.flush()
+
     def write_header(self):
         """
         Write PCAP header.
@@ -99,7 +106,7 @@ class PcapBleWriter(object):
         self.write_packet_header(ts_sec, ts_usec, len(payload))
         self.output.write(payload)
         self.write_fifo(payload)
-        self.fifo.flush()
+        self.flush_fifo()
 
     def close(self):
         """
