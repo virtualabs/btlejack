@@ -133,7 +133,7 @@ class PcapBlePHDRWriter(PcapBleWriter):
         payload_header = pack(
             '<BbbBIH',
             packet[2],
-            packet[3],
+            -packet[3],
             -100,
             0,
             aa,
