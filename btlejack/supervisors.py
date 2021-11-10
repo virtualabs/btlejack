@@ -482,7 +482,8 @@ class ConnectionSniffer(Supervisor):
                     class rawpacket:
                         def __init__(self, payload):
                             self.data = payload
-                    pkt = bytes([0]*10) +bytes([0x05, 0x22]) + packet.inita + packet.adva+packet.payload
+
+                    pkt = bytes([0]*10) + bytes([0x05 | packet.hdr_flags, 0x22]) + packet.inita + packet.adva + packet.payload
                     self.access_address = 0x8e89bed6
                     self.on_ll_packet(rawpacket(pkt))
 

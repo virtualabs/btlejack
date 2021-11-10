@@ -777,8 +777,9 @@ class ConnectionLostNotification(Packet):
 
 @register_packet(Packet.N_CONN_REQ, Packet.F_NOTIFICATION)
 class ConnectionRequestNotification(Packet):
-    def __init__(self, inita, adva, access_address, crc_init, win_size, win_offset, hop_interval, latency, timeout, channel_map, hop_increment):
-        self.inita =inita
+    def __init__(self, hdr_flags, inita, adva, access_address, crc_init, win_size, win_offset, hop_interval, latency, timeout, channel_map, hop_increment):
+        self.hdr_flags = hdr_flags
+        self.inita = inita
         self.adva = adva
         self.access_address = access_address
         self.crc_init = crc_init
@@ -813,8 +814,12 @@ class ConnectionRequestNotification(Packet):
         """
         Parse connection request packet.
         """
+        
         # check packet size
         assert packet.data[1] == 0x22
+
+        # save flags
+        flags = packet.data[0] & 0xF0
 
         # extract initA and advA
         inita = packet.data[2:8]
@@ -839,6 +844,7 @@ class ConnectionRequestNotification(Packet):
         # next lsb 5 bits is the hop increment
         hop_increment = packet.data[35] & 0x1f
         return ConnectionRequestNotification(
+            flags,
             inita,
             adva,
             access_address,
