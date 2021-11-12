@@ -209,13 +209,14 @@ def main():
 
 
         if os.name == 'posix':
-            mount_output = check_output('mount').splitlines()
-            mounted_volumes = [x.split()[2] for x in mount_output]
             flashed = 0
-            for volume in mounted_volumes:
-                if re.match(b'.*MICROBIT[0-9]*$', volume):
-                    print('[i] Flashing %s ...' % volume.decode('ascii'))
-                    path = os.path.join(volume.decode('ascii'),'fw.hex')
+            for line in check_output('mount').splitlines():
+                line = line.decode('ascii')
+                match = re.match(r'^\S+ on (.*MICROBIT(\s?[0-9]+)?)', line)
+                if match:
+                    volume = match.group(1)
+                    print('[i] Flashing %s ...' % volume)
+                    path = os.path.join(volume,'fw.hex')
                     fw = open(fw_path,'r').read()
                     # copy our firmware on it
                     with open(path, 'wb') as output:
