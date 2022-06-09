@@ -205,8 +205,15 @@ def main():
     if args.install:
         # retrieve the embedded firmware version
         _dir, _filename = os.path.split(__file__)
-        fw_path = os.path.join(_dir, "data", "btlejack-fw.hex")
 
+        fw_v1_path = os.path.join(_dir, "data", "btlejack-fw-v1.hex")
+        fw_v2_path = os.path.join(_dir, "data", "btlejack-fw-v2.hex")
+
+        supported_fw_versions = {
+            241: fw_v1_path,
+            255: fw_v2_path,
+            257: fw_v2_path
+        }
 
         if os.name == 'posix':
             mount_output = check_output('mount').splitlines()
@@ -214,13 +221,36 @@ def main():
             flashed = 0
             for volume in mounted_volumes:
                 if re.match(b'.*MICROBIT[0-9]*$', volume):
-                    print('[i] Flashing %s ...' % volume.decode('ascii'))
-                    path = os.path.join(volume.decode('ascii'),'fw.hex')
-                    fw = open(fw_path,'r').read()
-                    # copy our firmware on it
-                    with open(path, 'wb') as output:
-                        output.write(fw.encode('ascii'))
-                    flashed += 1
+                    # Determine Micro:Bit version, as specified in
+                    # https://microbit.org/get-started/user-guide/firmware/
+                    try:
+                        # Retrieve firmware version
+                        firmware_version = 0
+                        details_path = os.path.join(volume.decode('ascii'),'DETAILS.TXT')
+                        if os.path.exists(details_path) and os.path.isfile(details_path):
+                            # Read DETAILS.TXT
+                            details = open(details_path,'r').read()
+                            version = re.findall('Interface Version: ([0-9]+)', details)
+                            if len(version) > 0:
+                                firmware_version = int(version[0])
+                        
+                        # Pick the correct Btlejack firmware and deploy
+                        if firmware_version > 0 and firmware_version in supported_fw_versions:
+                            print('[i] Flashing %s with %s ...' % (
+                                volume.decode('ascii'), os.path.basename(supported_fw_versions[firmware_version])
+                            ))
+                            path = os.path.join(volume.decode('ascii'),'fw.hex')
+                            fw = open(supported_fw_versions[firmware_version],'r').read()
+                            # copy our firmware on it
+                            with open(path, 'wb') as output:
+                                output.write(fw.encode('ascii'))
+                            flashed += 1
+                        else:
+                            print('[!] Micro:Bit version could not be determined for %s' % volume.decode('ascii'))
+
+                    except IOError as err:
+                        print('[!] Could not access DETAILS.TXT for %s' % volume.decode('ascii'))
+
             if flashed > 0:
                 print('[i] Flashed %d devices' % flashed)
             else:

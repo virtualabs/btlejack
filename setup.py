@@ -38,5 +38,5 @@ setup(
             'btlejack=btlejack:main',
         ]
     },
-    package_data = {'btlejack' : ['data/btlejack-fw.hex', 'LICENSE']}
+    package_data = {'btlejack' : ['data/btlejack-fw-v1.hex', 'data/btlejack-fw-v2.hex', 'LICENSE']}
 )
