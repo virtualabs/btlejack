@@ -210,8 +210,12 @@ def main():
         fw_v2_path = os.path.join(_dir, "data", "btlejack-fw-v2.hex")
 
         supported_fw_versions = {
+            234: fw_v1_path,
             241: fw_v1_path,
+            249: fw_v1_path,
+            253: fw_v1_path,
             255: fw_v2_path,
+            256: fw_v2_path,
             257: fw_v2_path
         }
 
