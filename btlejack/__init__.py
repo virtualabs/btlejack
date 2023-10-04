@@ -216,7 +216,8 @@ def main():
             253: fw_v1_path,
             255: fw_v2_path,
             256: fw_v2_path,
-            257: fw_v2_path
+            257: fw_v2_path,
+            258: fw_v2_path
         }
 
         if os.name == 'posix':
