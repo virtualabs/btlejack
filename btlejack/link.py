@@ -6,6 +6,7 @@ from serial import Serial
 from serial.tools.list_ports import comports
 from struct import pack, unpack
 from threading import Lock
+from select import select
 from btlejack.packets import (Packet, PacketRegistry, ResetCommand,
     VersionCommand, ScanConnectionsCommand, RecoverCrcInitCommand,
     RecoverResponse, ResetResponse, VersionResponse, ScanConnectionsResponse,
@@ -56,6 +57,12 @@ class Link(object):
         # If an interface was found, continue
         self.interface = Serial(interface, baudrate, timeout=0)
         self.rx_buffer = bytes()
+
+    @staticmethod
+    def wait_for_readeable_links(links, timeout=1.0):
+        filenos = [link.interface.fileno() for link in links]
+        readables, _, _ = select(filenos, [], [], timeout)
+        return [link for link in links if link.interface.fileno() in readables]
 
     def set_timeout(self, timeout):
         """
