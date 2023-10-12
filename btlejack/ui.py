@@ -417,6 +417,9 @@ class CLIConnectionSniffer(ConnectionSniffer):
 
         pkt_hex = ' '.join(['%02x' % c for c in packet.data[10:]])
         print('LL Data: ' + pkt_hex)
+        if self.verbose:
+            pkt_str = ''.join([repr(chr(c)) for c in packet.data[10:]])
+            print('   str: ' + pkt_str)
 
 
     def on_hijacking_success(self):
@@ -634,6 +637,9 @@ class CLIConnectionRecovery(ConnectionRecovery):
                 self.output.write_packet(ts_sec, ts_usec, self.access_address, packet.data)
             pkt_hex = ' '.join(['%02x' % c for c in packet.data[10:]])
             print('LL Data: ' + pkt_hex)
+            if self.verbose:
+                pkt_str = ''.join([repr(chr(c)) for c in packet.data[10:]])
+                print('   str: ' + pkt_str)
 
     def on_hijacking_success(self):
         """
