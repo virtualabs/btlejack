@@ -1,6 +1,25 @@
 BtleJack: a new Bluetooth Low Energy swiss-army knife
 #####################################################
 
+.. image:: https://inventory.rawsec.ml/img/badges/Rawsec-inventoried-FF5050_flat.svg
+    :target: https://inventory.rawsec.ml/tools.html#BtleJack
+.. image:: https://badge.fury.io/gh/virtualabs%2Fbtlejack.svg
+    :target: https://badge.fury.io/gh/virtualabs%2Fbtlejack
+.. image:: https://badge.fury.io/py/btlejack.svg
+    :target: https://badge.fury.io/py/btlejack
+.. image:: https://img.shields.io/github/issues/virtualabs/btlejack.svg
+    :alt: GitHub issues
+    :target: https://github.com/virtualabs/btlejack/issues
+.. image:: https://img.shields.io/github/forks/virtualabs/btlejack.svg
+    :alt: GitHub forks
+    :target: https://github.com/virtualabs/btlejack/network
+.. image:: https://img.shields.io/github/stars/virtualabs/btlejack.svg
+    :alt: GitHub stars
+    :target: https://github.com/virtualabs/btlejack/stargazers
+.. image:: https://img.shields.io/github/license/virtualabs/btlejack.svg
+    :alt: GitHub license
+    :target: https://github.com/virtualabs/btlejack/blob/master/LICENSE
+    
 Btlejack provides everything you need to sniff, jam and hijack Bluetooth Low Energy devices. It relies on one or more `BBC Micro:Bit <http://microbit.org/>`_. devices running a dedicated firmware. You may also
 want to use an `Adafruit's Bluefruit LE sniffer <https://www.adafruit.com/product/2269>`_ or a `nRF51822 Eval Kit <https://www.waveshare.com/wiki/BLE400>`_, as we added support for these devices.
 
