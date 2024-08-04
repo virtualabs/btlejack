@@ -204,7 +204,7 @@ class WriteRequest(Attribute):
 
     @staticmethod
     def from_bytes(raw):
-        handle = unpack('<H', raw[1:])[0]
+        handle = unpack('<H', raw[1:3])[0]
         value = raw[3:]
         return WriteRequest(handle, value)
 

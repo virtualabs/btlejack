@@ -525,7 +525,7 @@ class ConnectionSniffer(Supervisor):
                 else:
                     self.on_ll_packet(packet)
 
-    def on_connection(self, inita, adva, crc_init, interval, increment, channel_map):
+    def on_connection(self, inita, adva, crc_init, interval, increment, channel_map, timeout):
         print('Got connection !')
 
     def on_ll_packet(self, packet):
